@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simulation Gate — Henceforth Discover</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#061018;color:#c8d8e8;font-family:'Segoe UI',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+a{color:#82d6ff;text-decoration:none}
+nav{background:#0b1b2a;border-bottom:1px solid #1f435c;padding:10px 18px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+nav a{color:#82d6ff;font-size:13px}
+nav span{color:#1f435c}
+h2{color:#82d6ff;font-size:15px;font-weight:600}
+h3{color:#c8d8e8;font-size:13px;font-weight:600;margin-bottom:8px}
+.layout{display:flex;flex:1;height:calc(100vh - 42px)}
+.sidebar{width:300px;min-width:220px;background:#0b1b2a;border-right:1px solid #1f435c;display:flex;flex-direction:column;overflow:hidden}
+.sidebar-hd{padding:12px 14px;border-bottom:1px solid #1f435c}
+.sidebar-body{flex:1;overflow-y:auto}
+.main{flex:1;overflow-y:auto;padding:20px}
+button{background:#1f435c;border:1px solid #2a5a7c;color:#c8d8e8;padding:5px 12px;border-radius:4px;cursor:pointer;font-size:12px}
+button:hover{background:#2a5a7c}
+button.primary{background:#0d5080;border-color:#1a7ab8;color:#fff}
+button.primary:hover{background:#1a7ab8}
+button.success{background:#0d5030;border-color:#1a7a48;color:#72d4a8}
+button.success:hover{background:#1a7a48}
+button.warn{background:#503000;border-color:#7a5000;color:#e8c472}
+button.warn:hover{background:#7a5000}
+input,textarea,select{background:#061018;border:1px solid #1f435c;color:#c8d8e8;padding:6px 9px;border-radius:4px;font-size:13px;font-family:inherit;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#82d6ff}
+.panel{background:#0b1b2a;border:1px solid #1f435c;border-radius:6px;padding:16px;margin-bottom:14px}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-open{background:#0d4030;color:#72d4a8}
+.badge-ready{background:#0d4030;color:#72d4a8}
+.badge-running{background:#0a2a5a;color:#82d6ff}
+.badge-completed{background:#1a3d5c;color:#82d6ff}
+.badge-blocked{background:#5c1f1f;color:#ff9999}
+.badge-planning{background:#2a2a0a;color:#e8d472}
+.gate-open{background:#061a10;border:1px solid #1f5c3a}
+.gate-blocked{background:#1a0606;border:1px solid #5c1f1f}
+.gate-icon{font-size:24px;margin-right:10px}
+.stat-row{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.stat-box{background:#0b1b2a;border:1px solid #1f435c;border-radius:6px;padding:10px 18px;text-align:center;min-width:100px}
+.stat-n{font-size:26px;font-weight:700;color:#82d6ff;display:block}
+.stat-l{font-size:11px;color:#5a8ab0}
+.plan-item{padding:10px 14px;border-bottom:1px solid #0d2235;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:8px}
+.plan-item:hover{background:#102030}
+.plan-item.active{background:#132c40;border-left:3px solid #82d6ff}
+.plan-item .pi-title{font-size:13px;font-weight:600;color:#c8d8e8;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plan-item .pi-meta{font-size:11px;color:#5a8ab0}
+.field-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px}
+.field-row label{font-size:12px;color:#82a6c8;min-width:130px;padding-top:7px}
+.chip{display:inline-block;background:#0a2030;border:1px solid #1f435c;border-radius:4px;padding:2px 8px;font-size:11px;margin:2px}
+.gate-row{display:flex;align-items:center;padding:10px 14px;border-radius:6px;margin-bottom:12px}
+.gate-row .gr-text{flex:1}
+.gate-row .gr-title{font-size:13px;font-weight:700;margin-bottom:3px}
+.gate-row .gr-reason{font-size:12px;color:#a0c0d8}
+.missing-tag{display:inline-block;background:#3d0a0a;border:1px solid #5c2a2a;color:#ff9999;border-radius:3px;padding:1px 6px;font-size:10px;margin:2px}
+.progress-bar{height:6px;background:#1f435c;border-radius:3px;margin:6px 0}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s}
+.tab{display:inline-block;padding:5px 14px;border-radius:4px 4px 0 0;cursor:pointer;font-size:12px;color:#5a8ab0}
+.tab.active{background:#1f435c;color:#c8d8e8}
+.tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid #1f435c;padding-bottom:8px}
+.req-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.req-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#061018;border:1px solid #1f435c;border-radius:4px;font-size:12px}
+.req-item .ri-check{font-size:16px;width:20px;text-align:center}
+.req-item .ri-label{flex:1;color:#a0c0d8}
+.req-item.req-pass{border-color:#1f5c3a}
+.req-item.req-fail{border-color:#5c1f1f}
+.handoff-box{background:#061a10;border:1px solid #1f5c3a;border-radius:5px;padding:14px}
+.empty{color:#5a8ab0;font-size:13px;padding:30px;text-align:center}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">Workspace</a><span>|</span>
+  <a href="/doctor.html">Doctor</a><span>|</span>
+  <a href="/meta.html">Meta Lab</a><span>|</span>
+  <a href="/challenges.html" style="color:#f4a44a">Challenges</a><span>|</span>
+  <a href="/relationships.html" style="color:#c084fc">Relationships</a><span>|</span>
+  <a href="/passport.html" style="color:#72d4a8">Passport</a><span>|</span>
+  <a href="/ledger.html" style="color:#ffcf75">Ledger</a><span>|</span>
+  <a href="/council.html" style="color:#e8a842">Council</a><span>|</span>
+  <a href="/simulation.html" style="color:#e872d4;font-weight:700">Simulations</a><span>|</span>
+  <a href="/routing.html" style="color:#f472b6">Routing</a><span>|</span>
+  <a href="/graph.html" style="color:#a78bfa">Graph</a><span>|</span>
+  <a href="/billing.html" style="color:#34d399">Billing</a><span>|</span>
+  <a href="/builders.html" style="color:#fb923c">Builders</a>
+  <span>|</span>
+  <a href="/departments.html" style="color:#60a5fa">Departments</a>
+  <span>|</span>
+  <a href="/demo.html" style="color:#38bdf8">Demo</a>
+</nav>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-hd">
+      <h2>🧪 Simulation Plans</h2>
+      <div id="gateHeaderBadge" style="margin-top:6px;font-size:12px;color:#5a8ab0">Loading…</div>
+    </div>
+    <div id="planList" class="sidebar-body"></div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Stats row -->
+    <div class="stat-row" id="statsRow">
+      <div class="stat-box"><span class="stat-n" id="sTotal">—</span><span class="stat-l">Total Plans</span></div>
+      <div class="stat-box"><span class="stat-n" id="sOpen" style="color:#72d4a8">—</span><span class="stat-l">Gate Open</span></div>
+      <div class="stat-box"><span class="stat-n" id="sBlocked" style="color:#ff9999">—</span><span class="stat-l">Gate Blocked</span></div>
+      <div class="stat-box"><span class="stat-n" id="sCompleted" style="color:#82d6ff">—</span><span class="stat-l">Completed</span></div>
+    </div>
+
+    <!-- New plan form -->
+    <div class="panel" id="newPlanPanel">
+      <h3>📋 Plan New Simulation</h3>
+      <div class="field-row" style="margin-top:10px">
+        <label>Title</label>
+        <input id="npTitle" placeholder="Simulation title">
+      </div>
+      <div class="field-row">
+        <label>Question / Hypothesis</label>
+        <input id="npQuestion" placeholder="What will this simulation test?">
+      </div>
+      <div class="field-row">
+        <label>Atlas Object ID</label>
+        <input id="npAtlas" list="atlasList" placeholder="Linked discovery object">
+        <datalist id="atlasList"></datalist>
+      </div>
+      <div class="field-row">
+        <label>Project</label>
+        <input id="npProject" value="ARGOS">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="primary" onclick="createPlan()">Create Plan</button>
+        <button id="newPlanToggle" onclick="toggleNew()">Hide</button>
+      </div>
+    </div>
+
+    <!-- Plan detail -->
+    <div id="planDetail"></div>
+    <div id="emptyState" class="empty">Select a simulation plan from the sidebar.</div>
+  </div>
+</div>
+
+<script>
+let plans=[], currentPlan=null;
+
+async function init(){
+  await loadObjects();
+  await loadPlans();
+}
+
+async function loadObjects(){
+  try{
+    const r=await fetch('/api/atlas/objects');
+    const d=await r.json();
+    const dl=document.getElementById('atlasList');
+    dl.innerHTML=(d.objects||[]).map(o=>`<option value="${o.id}">${esc(o.title)} (${o.id})</option>`).join('');
+  }catch(e){}
+}
+
+async function loadPlans(){
+  const r=await fetch('/api/simulation/gate');
+  const d=await r.json();
+  plans=d.plans||[];
+  // Stats
+  document.getElementById('sTotal').textContent=d.total||0;
+  document.getElementById('sOpen').textContent=d.gate_open||0;
+  document.getElementById('sBlocked').textContent=d.gate_blocked||0;
+  document.getElementById('sCompleted').textContent=plans.filter(p=>p.status==='completed').length;
+  const hdr=document.getElementById('gateHeaderBadge');
+  hdr.innerHTML=`<span class="badge ${d.gate_open>0?'badge-open':'badge-blocked'}">${d.gate_open} open</span> <span class="badge badge-blocked">${d.gate_blocked} blocked</span>`;
+  renderList();
+}
+
+function renderList(){
+  const el=document.getElementById('planList');
+  if(!plans.length){el.innerHTML='<div class="empty">No simulation plans yet.</div>';return}
+  el.innerHTML=plans.map(p=>`
+    <div class="plan-item${currentPlan&&currentPlan.plan_id===p.plan_id?' active':''}" onclick="openPlan('${esc(p.plan_id)}')">
+      <div style="flex:1;min-width:0">
+        <div class="pi-title">${esc(p.title||p.plan_id)}</div>
+        <div class="pi-meta">${esc(p.simulation_type||'')}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end">
+        <span class="badge badge-${p.status||'planning'}">${p.status||'planning'}</span>
+        <span style="font-size:16px">${p.gate&&p.gate.allowed?'🟢':'🔴'}</span>
+      </div>
+    </div>`).join('');
+}
+
+async function openPlan(id){
+  const summary=plans.find(p=>p.plan_id===id);
+  if(!summary)return;
+  // Fetch full plan detail
+  const r=await fetch('/api/simulation/plans');
+  const d=await r.json();
+  const full=(d.plans||[]).find(p=>p.id===id)||{};
+  currentPlan={...summary,...full};
+  renderList();
+  renderDetail();
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('planDetail').style.display='block';
+}
+
+function renderDetail(){
+  const p=currentPlan;
+  const gate=p.gate||{};
+  const allowed=gate.allowed;
+  const missing=gate.missing||[];
+  const status=p.status||'planning';
+
+  const REQUIRED=['success_condition','failure_condition','variables','required_data','required_tools'];
+  const checks=REQUIRED.map(k=>({key:k,label:k.replace(/_/g,' '),pass:!!(Array.isArray(p[k])?p[k].length:p[k])}));
+
+  const pct=Math.round(checks.filter(c=>c.pass).length/REQUIRED.length*100);
+  const statusFlow=['planning','ready','running','completed'];
+  const si=statusFlow.indexOf(status);
+
+  document.getElementById('planDetail').innerHTML=`
+  <div class="panel">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:10px">
+      <div>
+        <h2>${esc(p.title||p.plan_id)}</h2>
+        <div style="font-size:12px;color:#5a8ab0;margin-top:3px">${esc(p.simulation_type||'')} • ${esc(p.project||'')}</div>
+        ${p.atlas_object_id?`<div style="font-size:11px;color:#5a8ab0;margin-top:2px">Atlas: <a href="/relationships.html?id=${esc(p.atlas_object_id)}" style="color:#82d6ff">${esc(p.atlas_object_id)}</a></div>`:''}
+      </div>
+      <span class="badge badge-${status}">${status}</span>
+    </div>
+
+    <!-- Gate status -->
+    <div class="gate-row ${allowed?'gate-open':'gate-blocked'}">
+      <div class="gate-icon">${allowed?'🟢':'🔴'}</div>
+      <div class="gr-text">
+        <div class="gr-title">${allowed?'Gate Open — Prototype Cleared':'Gate Blocked'}</div>
+        <div class="gr-reason">${esc(gate.reason||'')}</div>
+        ${missing.length?`<div style="margin-top:5px">${missing.map(m=>`<span class="missing-tag">missing: ${esc(m)}</span>`).join('')}</div>`:''}
+      </div>
+    </div>
+
+    <!-- Readiness checklist -->
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <h3 style="margin:0">Readiness Checklist</h3>
+        <span style="font-size:12px;color:#82d6ff">${pct}% complete</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pct===100?'#72d4a8':'#82d6ff'}"></div></div>
+      <div class="req-list">
+        ${checks.map(c=>`
+          <div class="req-item ${c.pass?'req-pass':'req-fail'}">
+            <div class="ri-check">${c.pass?'✅':'❌'}</div>
+            <div class="ri-label">${c.label}</div>
+            ${!c.pass?`<button style="font-size:11px;padding:2px 8px" onclick="editField('${c.key}')">Fill in</button>`:''}
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Status advancement -->
+    <div style="margin-bottom:14px">
+      <h3>Status Progression</h3>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px">
+        ${statusFlow.map((s,i)=>`
+          <span style="padding:5px 14px;border-radius:14px;font-size:12px;${i===si?'background:#1f435c;color:#c8d8e8;font-weight:700':'background:#061018;border:1px solid #1f435c;color:#5a8ab0'}">${s}</span>
+          ${i<statusFlow.length-1?'<span style="color:#1f435c">→</span>':''}`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
+        ${status!=='running'&&status!=='completed'?`<button class="success" onclick="setStatus('ready')" ${!allowed?'title="Gate blocked — fill required fields first"':''}>Mark Ready</button>`:''}
+        ${status==='ready'?`<button class="primary" onclick="setStatus('running')">▶ Start Run</button>`:''}
+        ${status==='running'?`<button class="warn" onclick="setStatus('completed')">✓ Mark Completed</button>`:''}
+        ${status==='completed'&&allowed?`<button class="success" onclick="handoff()">🚀 Send to Prototype</button>`:''}
+      </div>
+      ${!allowed&&status!=='completed'?`<div style="margin-top:8px;font-size:12px;color:#ff9999">⚠️ Gate is blocked — complete all required fields before marking ready.</div>`:''}
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'t-details')">Details</div>
+      <div class="tab" onclick="switchTab(this,'t-tools')">Tools &amp; Data</div>
+      <div class="tab" onclick="switchTab(this,'t-edit')">Edit Plan</div>
+    </div>
+
+    <div id="t-details">
+      <div class="field-row">
+        <label>Question</label><div style="font-size:13px;color:#a0c0d8">${esc(p.question||'—')}</div>
+      </div>
+      <div class="field-row">
+        <label>Hypothesis</label><div style="font-size:13px;color:#a0c0d8">${esc(p.hypothesis||'—')}</div>
+      </div>
+      <div class="field-row">
+        <label>Variables</label>
+        <div>${(p.variables||[]).map(v=>`<span class="chip">${esc(v)}</span>`).join('')||'<span style="color:#5a8ab0">none</span>'}</div>
+      </div>
+      <div class="field-row">
+        <label>Success condition</label><div style="font-size:13px;color:#72d4a8">${esc(p.success_condition||'—')}</div>
+      </div>
+      <div class="field-row">
+        <label>Failure condition</label><div style="font-size:13px;color:#ff9999">${esc(p.failure_condition||'—')}</div>
+      </div>
+      <div class="field-row">
+        <label>Control baseline</label><div style="font-size:13px;color:#a0c0d8">${esc(p.control_baseline||'—')}</div>
+      </div>
+      <div class="field-row">
+        <label>Expected output</label><div style="font-size:13px;color:#a0c0d8">${esc(p.expected_output||'—')}</div>
+      </div>
+      <div class="field-row">
+        <label>Next action</label><div style="font-size:13px;color:#e8c472">${esc(p.next_action||'—')}</div>
+      </div>
+      ${(p.risk_notes||[]).length?`<div class="field-row"><label>Risk notes</label><div>${p.risk_notes.map(r=>`<div style="font-size:12px;color:#e8a842;margin-bottom:3px">⚠ ${esc(r)}</div>`).join('')}</div></div>`:''}
+    </div>
+
+    <div id="t-tools" style="display:none">
+      <div class="field-row">
+        <label>Required tools</label>
+        <div>${(p.required_tools||[]).map(t=>`<span class="chip" style="border-color:#1a5c3a;color:#72d4a8">${esc(t)}</span>`).join('')||'<span style="color:#5a8ab0">none listed</span>'}</div>
+      </div>
+      <div class="field-row">
+        <label>Required data</label>
+        <div>${(p.required_data||[]).map(t=>`<span class="chip">${esc(t)}</span>`).join('')||'<span style="color:#5a8ab0">none listed</span>'}</div>
+      </div>
+    </div>
+
+    <div id="t-edit" style="display:none">
+      <div style="display:flex;flex-direction:column;gap:10px;max-width:620px">
+        <div class="field-row"><label>Hypothesis</label><textarea id="eHyp" rows="2">${esc(p.hypothesis||'')}</textarea></div>
+        <div class="field-row"><label>Variables (comma-sep)</label><input id="eVars" value="${esc((p.variables||[]).join(', '))}"></div>
+        <div class="field-row"><label>Required data (comma-sep)</label><input id="eRD" value="${esc((p.required_data||[]).join(', '))}"></div>
+        <div class="field-row"><label>Required tools (comma-sep)</label><input id="eRT" value="${esc((p.required_tools||[]).join(', '))}"></div>
+        <div class="field-row"><label>Success condition</label><input id="eSC" value="${esc(p.success_condition||'')}"></div>
+        <div class="field-row"><label>Failure condition</label><input id="eFC" value="${esc(p.failure_condition||'')}"></div>
+        <div class="field-row"><label>Control baseline</label><input id="eCB" value="${esc(p.control_baseline||'')}"></div>
+        <div class="field-row"><label>Expected output</label><input id="eEO" value="${esc(p.expected_output||'')}"></div>
+        <div class="field-row"><label>Next action</label><input id="eNA" value="${esc(p.next_action||'')}"></div>
+        <button class="primary" onclick="savePlan()">💾 Save Changes</button>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+function switchTab(el,tid){
+  el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['t-details','t-tools','t-edit'].forEach(id=>{
+    const d=document.getElementById(id);if(d)d.style.display='none';
+  });
+  const t=document.getElementById(tid);if(t)t.style.display='block';
+}
+
+function editField(key){
+  // Switch to edit tab and focus that field
+  const editTab=document.querySelector('.tab:last-child');
+  if(editTab)editTab.click();
+  const map={hypothesis:'eHyp',variables:'eVars',required_data:'eRD',required_tools:'eRT',success_condition:'eSC',failure_condition:'eFC'};
+  const el=document.getElementById(map[key]);
+  if(el){el.scrollIntoView({behavior:'smooth'});el.focus();}
+}
+
+async function savePlan(){
+  if(!currentPlan)return;
+  const split=s=>s.split(',').map(x=>x.trim()).filter(Boolean);
+  const updates={
+    hypothesis:document.getElementById('eHyp').value,
+    variables:split(document.getElementById('eVars').value),
+    required_data:split(document.getElementById('eRD').value),
+    required_tools:split(document.getElementById('eRT').value),
+    success_condition:document.getElementById('eSC').value,
+    failure_condition:document.getElementById('eFC').value,
+    control_baseline:document.getElementById('eCB').value,
+    expected_output:document.getElementById('eEO').value,
+    next_action:document.getElementById('eNA').value,
+    status:currentPlan.status
+  };
+  // Save via status endpoint (re-uses existing POST /api/simulation/status)
+  await fetch('/api/simulation/status',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({path:currentPlan._path||currentPlan.path,...updates})});
+  await reload();
+}
+
+async function setStatus(status){
+  if(!currentPlan)return;
+  if(status==='ready'&&!currentPlan.gate?.allowed){
+    if(!confirm('Gate is blocked — required fields are missing. Mark ready anyway?'))return;
+  }
+  await fetch('/api/simulation/status',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({path:currentPlan._path||currentPlan.path,status})});
+  await reload();
+}
+
+async function handoff(){
+  if(!currentPlan)return;
+  if(!confirm('Send to Prototype Development Engine?'))return;
+  await fetch('/api/simulation/status',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({path:currentPlan._path||currentPlan.path,status:'completed'})});
+  alert('Handoff recorded — check 16_PROJECT_DEVELOPMENT_ENGINE for the DEV record.');
+  await reload();
+}
+
+async function createPlan(){
+  const title=document.getElementById('npTitle').value.trim();
+  const question=document.getElementById('npQuestion').value.trim();
+  const atlas=document.getElementById('npAtlas').value.trim();
+  const project=document.getElementById('npProject').value.trim()||'ARGOS';
+  if(!title){alert('Title required');return}
+  const btn=document.querySelector('#newPlanPanel button.primary');
+  btn.disabled=true;btn.textContent='Creating…';
+  try{
+    const r=await fetch('/api/simulation/plan',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({title,question,atlas_object_id:atlas,project})});
+    const d=await r.json();
+    document.getElementById('npTitle').value='';
+    document.getElementById('npQuestion').value='';
+    document.getElementById('npAtlas').value='';
+    await loadPlans();
+    if(d.plan)await openPlan(d.plan.id);
+  }catch(e){alert('Error: '+e)}
+  btn.disabled=false;btn.textContent='Create Plan';
+}
+
+function toggleNew(){
+  const p=document.getElementById('newPlanPanel');
+  const btn=document.getElementById('newPlanToggle');
+  const showing=p.style.display!=='none';
+  p.style.display=showing?'none':'block';
+  btn.textContent=showing?'+ New Plan':'Hide';
+}
+
+async function reload(){
+  const id=currentPlan?.plan_id||currentPlan?.id;
+  await loadPlans();
+  if(id)await openPlan(id);
+}
+
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+init();
+</script>
+</body>
+</html>

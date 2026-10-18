@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Builders — Henceforth Discover</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#061018;color:#c8d8e8;font-family:'Segoe UI',sans-serif;min-height:100vh}
+a{color:#82d6ff;text-decoration:none}
+nav{background:#0b1b2a;border-bottom:1px solid #1f435c;padding:8px 14px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:12px}
+nav span{color:#1f435c}
+.page{max-width:960px;margin:0 auto;padding:24px 16px}
+h1{font-size:20px;color:#82d6ff;margin-bottom:4px}
+.subtitle{font-size:12px;color:#5a8ab0;margin-bottom:24px}
+.panel{background:#0b1b2a;border:1px solid #1f435c;border-radius:8px;padding:20px;margin-bottom:18px}
+.panel h2{font-size:14px;color:#82d6ff;margin-bottom:14px}
+.stat-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.stat{background:#061018;border:1px solid #1f435c;border-radius:6px;padding:14px 18px;flex:1;min-width:120px}
+.stat-val{font-size:22px;font-weight:700;color:#82d6ff}
+.stat-label{font-size:11px;color:#5a8ab0;margin-top:2px}
+button{background:#1f435c;border:1px solid #2a5a7c;color:#c8d8e8;padding:7px 16px;border-radius:5px;cursor:pointer;font-size:12px;transition:background .15s}
+button:hover{background:#2a5a7c}
+button.primary{background:#0d5080;border-color:#1a7ab8;color:#fff}
+button.primary:hover{background:#1a7ab8}
+input,select,textarea{background:#061018;border:1px solid #1f435c;color:#c8d8e8;padding:6px 10px;border-radius:4px;font-size:13px;width:100%}
+textarea{resize:vertical;min-height:60px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;color:#5a8ab0;margin-bottom:4px}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase}
+.badge-online{background:#0a3020;color:#72d4a8;border:1px solid #72d4a8}
+.badge-idle{background:#1a2008;color:#c8e840;border:1px solid #a0b830}
+.badge-offline{background:#101820;color:#3a6080;border:1px solid #1f435c}
+.badge-owner{background:#1a0a30;color:#c084fc;border:1px solid #8050c0}
+.badge-editor{background:#0a1530;color:#82d6ff;border:1px solid #1f435c}
+.badge-viewer{background:#0a1520;color:#5a8ab0;border:1px solid #1f435c}
+.builder-card{display:flex;align-items:center;gap:14px;padding:14px;background:#061018;border:1px solid #1f435c;border-radius:7px;margin-bottom:10px}
+.avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;flex-shrink:0}
+.builder-info{flex:1}
+.builder-name{font-size:14px;font-weight:700;margin-bottom:2px}
+.builder-meta{font-size:11px;color:#5a8ab0;display:flex;gap:10px;flex-wrap:wrap}
+.builder-actions{display:flex;gap:8px;flex-shrink:0}
+.presence-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+.dot-online{background:#72d4a8}
+.dot-idle{background:#c8e840}
+.dot-offline{background:#3a6080}
+.activity-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #0f2535;font-size:12px;align-items:flex-start}
+.activity-row:last-child{border-bottom:none}
+.act-time{color:#3a6080;min-width:90px;font-size:11px;flex-shrink:0}
+.act-builder{color:#82d6ff;min-width:90px;flex-shrink:0}
+.act-msg{flex:1;color:#c8d8e8}
+.act-type{flex-shrink:0}
+.session-card{background:#061018;border:1px solid #1f435c;border-radius:6px;padding:14px;margin-bottom:10px}
+.session-title{font-weight:700;margin-bottom:6px;font-size:14px}
+.session-meta{font-size:11px;color:#5a8ab0;display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.tab-row{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid #1f435c;padding-bottom:0}
+.tab{padding:7px 14px;cursor:pointer;font-size:12px;color:#5a8ab0;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:#82d6ff;border-bottom-color:#82d6ff}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.invite-form{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.invite-form .field{margin-bottom:0;flex:1;min-width:160px}
+.empty{color:#3a6080;font-size:13px;padding:20px 0;text-align:center}
+.notice{background:#0a2030;border:1px solid #1f435c;border-radius:6px;padding:10px 14px;font-size:12px;color:#82d6ff;margin-bottom:14px}
+.me-card{background:#061018;border:1px solid #2a5a7c;border-radius:7px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px}
+.ping{font-size:11px;color:#3a6080}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">Workspace</a><span>|</span>
+  <a href="/doctor.html">Doctor</a><span>|</span>
+  <a href="/meta.html">Meta Lab</a><span>|</span>
+  <a href="/challenges.html" style="color:#f4a44a">Challenges</a><span>|</span>
+  <a href="/relationships.html" style="color:#c084fc">Relationships</a><span>|</span>
+  <a href="/passport.html" style="color:#72d4a8">Passport</a><span>|</span>
+  <a href="/ledger.html" style="color:#ffcf75">Ledger</a><span>|</span>
+  <a href="/council.html" style="color:#e8a842">Council</a><span>|</span>
+  <a href="/simulation.html" style="color:#e872d4">Simulations</a><span>|</span>
+  <a href="/routing.html" style="color:#f472b6">Routing</a><span>|</span>
+  <a href="/graph.html" style="color:#a78bfa">Graph</a><span>|</span>
+  <a href="/billing.html" style="color:#34d399">Billing</a><span>|</span>
+  <a href="/builders.html" style="color:#fb923c;font-weight:700">Builders</a>
+  <span>|</span>
+  <a href="/departments.html" style="color:#60a5fa">Departments</a>
+  <span>|</span>
+  <a href="/demo.html" style="color:#38bdf8">Demo</a>
+</nav>
+
+<div class="page">
+  <h1>👥 Multi-Builder Sessions</h1>
+  <p class="subtitle">Live presence, shared workspace, and collaborative access management.</p>
+
+  <!-- My identity -->
+  <div class="me-card" id="meCard">
+    <div class="avatar" id="meAvatar" style="background:#0d3050">?</div>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:700" id="meName">Not registered</div>
+      <div style="font-size:11px;color:#5a8ab0" id="meRole">—</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="ping" id="pingLabel">Not connected</span>
+      <button id="btnPing" onclick="sendPing()">📡 Ping</button>
+      <button class="primary" id="btnRegister" onclick="showRegisterForm()">Register Me</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-row">
+    <div class="stat"><div class="stat-val" id="statTotal">—</div><div class="stat-label">Total Builders</div></div>
+    <div class="stat"><div class="stat-val" id="statOnline">—</div><div class="stat-label">Online Now</div></div>
+    <div class="stat"><div class="stat-val" id="statSessions">—</div><div class="stat-label">Active Sessions</div></div>
+    <div class="stat"><div class="stat-val" id="statEvents">—</div><div class="stat-label">Activity Events</div></div>
+  </div>
+
+  <!-- Register form (hidden by default) -->
+  <div class="panel" id="registerPanel" style="display:none">
+    <h2>🆕 Register as a Builder</h2>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div class="field" style="flex:1;min-width:160px"><label>Display Name</label><input id="regName" placeholder="Your name"></div>
+      <div class="field" style="flex:1;min-width:120px"><label>Role</label>
+        <select id="regRole">
+          <option value="owner">Owner</option>
+          <option value="editor">Editor</option>
+          <option value="viewer">Viewer</option>
+        </select>
+      </div>
+      <div class="field" style="flex:1;min-width:120px"><label>Emoji Avatar</label><input id="regEmoji" placeholder="🔭" maxlength="4" style="font-size:20px;text-align:center"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="primary" onclick="register()">Register</button>
+      <button onclick="document.getElementById('registerPanel').style.display='none'">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-row">
+    <div class="tab active" onclick="switchTab('builders')">Builders</div>
+    <div class="tab" onclick="switchTab('sessions')">Sessions</div>
+    <div class="tab" onclick="switchTab('activity')">Activity Log</div>
+    <div class="tab" onclick="switchTab('invite')">Invite</div>
+  </div>
+
+  <!-- Builders tab -->
+  <div class="tab-panel active" id="tab-builders">
+    <div id="builderList"><div class="empty">Loading builders…</div></div>
+  </div>
+
+  <!-- Sessions tab -->
+  <div class="tab-panel" id="tab-sessions">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:12px;color:#5a8ab0">Collaborative work sessions</span>
+      <button class="primary" onclick="showNewSession()">+ New Session</button>
+    </div>
+    <div id="newSessionForm" style="display:none;background:#061018;border:1px solid #1f435c;border-radius:7px;padding:14px;margin-bottom:14px">
+      <div class="field"><label>Session Title</label><input id="sessTitle" placeholder="e.g. ARGOS Phase 2 Review"></div>
+      <div class="field"><label>Description</label><textarea id="sessDesc" placeholder="What are we working on?"></textarea></div>
+      <div class="field"><label>Atlas Object (optional)</label><input id="sessAtlas" placeholder="ATLAS-001"></div>
+      <div style="display:flex;gap:8px">
+        <button class="primary" onclick="createSession()">Start Session</button>
+        <button onclick="document.getElementById('newSessionForm').style.display='none'">Cancel</button>
+      </div>
+    </div>
+    <div id="sessionList"><div class="empty">Loading sessions…</div></div>
+  </div>
+
+  <!-- Activity log tab -->
+  <div class="tab-panel" id="tab-activity">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:12px;color:#5a8ab0">Recent workspace activity</span>
+      <button onclick="loadActivity()">↺ Refresh</button>
+    </div>
+    <div id="activityList"><div class="empty">Loading…</div></div>
+  </div>
+
+  <!-- Invite tab -->
+  <div class="tab-panel" id="tab-invite">
+    <div class="notice">Share the server URL with collaborators. They can register themselves on this page. If you're on Render, the URL is your public Render domain.</div>
+    <div class="panel" style="margin-bottom:0">
+      <h2>📋 Add Builder Manually</h2>
+      <div class="invite-form">
+        <div class="field"><label>Name</label><input id="invName" placeholder="Builder name"></div>
+        <div class="field"><label>Role</label>
+          <select id="invRole">
+            <option value="editor">Editor</option>
+            <option value="viewer">Viewer</option>
+            <option value="owner">Owner</option>
+          </select>
+        </div>
+        <div class="field"><label>Emoji</label><input id="invEmoji" placeholder="🔭" maxlength="4" style="font-size:20px;text-align:center;width:70px"></div>
+        <button class="primary" onclick="inviteBuilder()" style="height:33px;align-self:flex-end">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Identity persisted in localStorage ──────────────────────────────────────
+let ME=null;
+try{ ME=JSON.parse(localStorage.getItem('hf_builder')||'null'); }catch(e){}
+
+let pingTimer=null, presenceTimer=null;
+const PRESENCE_INTERVAL=25000; // 25s heartbeat
+
+// ── Init ────────────────────────────────────────────────────────────────────
+async function init(){
+  renderMe();
+  await Promise.all([loadBuilders(), loadSessions(), loadActivity()]);
+  if(ME) startPresence();
+}
+
+function renderMe(){
+  if(!ME){
+    document.getElementById('meName').textContent='Not registered';
+    document.getElementById('meRole').textContent='Click Register Me to join as a builder';
+    document.getElementById('meAvatar').textContent='?';
+    document.getElementById('btnPing').style.display='none';
+    return;
+  }
+  document.getElementById('meName').textContent=ME.name;
+  document.getElementById('meRole').textContent=ME.role;
+  document.getElementById('meAvatar').textContent=ME.emoji||'🔭';
+  document.getElementById('meAvatar').style.background=avatarBg(ME.name);
+  document.getElementById('btnRegister').textContent='Edit Profile';
+  document.getElementById('btnPing').style.display='';
+}
+
+function showRegisterForm(){
+  if(ME){
+    document.getElementById('regName').value=ME.name||'';
+    document.getElementById('regRole').value=ME.role||'editor';
+    document.getElementById('regEmoji').value=ME.emoji||'';
+  }
+  document.getElementById('registerPanel').style.display='';
+}
+
+async function register(){
+  const name=document.getElementById('regName').value.trim();
+  const role=document.getElementById('regRole').value;
+  const emoji=document.getElementById('regEmoji').value.trim()||'🔭';
+  if(!name){ alert('Enter a name'); return; }
+  try{
+    const r=await fetch('/api/builders/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,role,emoji})});
+    const d=await r.json();
+    if(d.error){ alert(d.error); return; }
+    ME={...d.builder};
+    localStorage.setItem('hf_builder',JSON.stringify(ME));
+    document.getElementById('registerPanel').style.display='none';
+    renderMe();
+    startPresence();
+    loadBuilders();
+  }catch(e){ alert('Network error'); }
+}
+
+async function sendPing(){
+  if(!ME) return;
+  try{
+    const r=await fetch('/api/builders/ping',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({builder_id:ME.id})});
+    const d=await r.json();
+    const lbl=document.getElementById('pingLabel');
+    lbl.textContent='Last ping: '+new Date().toLocaleTimeString();
+    lbl.style.color='#72d4a8';
+    setTimeout(()=>{lbl.style.color='';},3000);
+  }catch(e){}
+}
+
+function startPresence(){
+  if(presenceTimer) clearInterval(presenceTimer);
+  sendPing();
+  presenceTimer=setInterval(()=>sendPing(), PRESENCE_INTERVAL);
+}
+
+// ── Builders tab ─────────────────────────────────────────────────────────────
+async function loadBuilders(){
+  try{
+    const r=await fetch('/api/builders');
+    const d=await r.json();
+    document.getElementById('statTotal').textContent=d.total||0;
+    document.getElementById('statOnline').textContent=(d.builders||[]).filter(b=>b.presence==='online'||b.presence==='idle').length;
+    const el=document.getElementById('builderList');
+    if(!(d.builders||[]).length){ el.innerHTML='<div class="empty">No builders registered yet.</div>'; return; }
+    el.innerHTML=(d.builders||[]).map(b=>builderCard(b)).join('');
+  }catch(e){ document.getElementById('builderList').innerHTML='<div class="empty">Could not load builders.</div>'; }
+}
+
+function builderCard(b){
+  const isMe=ME&&ME.id===b.id;
+  const pres=b.presence||'offline';
+  return `<div class="builder-card">
+    <div class="avatar" style="background:${avatarBg(b.name)}">${esc(b.emoji||initials(b.name))}</div>
+    <div class="builder-info">
+      <div class="builder-name">${esc(b.name)}${isMe?' <span style="font-size:10px;color:#5a8ab0">(you)</span>':''}</div>
+      <div class="builder-meta">
+        <span><span class="presence-dot dot-${pres}"></span>${pres}</span>
+        <span class="badge badge-${b.role||'viewer'}">${b.role||'viewer'}</span>
+        ${b.last_seen?`<span>Last seen ${timeAgo(b.last_seen)}</span>`:''}
+        ${b.current_session?`<span style="color:#82d6ff">In session: ${esc(b.current_session)}</span>`:''}
+      </div>
+    </div>
+    <div class="builder-actions">
+      ${!isMe&&(ME?.role==='owner')?`<button onclick="changeRole('${b.id}')">Role</button>`:''}
+      ${!isMe&&(ME?.role==='owner')?`<button onclick="removeBuilder('${b.id}','${esc(b.name)}')">Remove</button>`:''}
+    </div>
+  </div>`;
+}
+
+async function changeRole(bid){
+  const role=prompt('New role (owner/editor/viewer):');
+  if(!role) return;
+  await fetch('/api/builders/role',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({builder_id:bid,role,requested_by:ME?.id})});
+  loadBuilders();
+}
+
+async function removeBuilder(bid,name){
+  if(!confirm(`Remove builder "${name}"?`)) return;
+  await fetch('/api/builders/remove',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({builder_id:bid,requested_by:ME?.id})});
+  loadBuilders();
+}
+
+// ── Sessions tab ─────────────────────────────────────────────────────────────
+async function loadSessions(){
+  try{
+    const r=await fetch('/api/builders/sessions');
+    const d=await r.json();
+    document.getElementById('statSessions').textContent=(d.sessions||[]).filter(s=>s.status==='active').length;
+    const el=document.getElementById('sessionList');
+    if(!(d.sessions||[]).length){ el.innerHTML='<div class="empty">No sessions yet. Start one above.</div>'; return; }
+    el.innerHTML=(d.sessions||[]).map(s=>sessionCard(s)).join('');
+  }catch(e){ document.getElementById('sessionList').innerHTML='<div class="empty">Could not load sessions.</div>'; }
+}
+
+function sessionCard(s){
+  const active=s.status==='active';
+  return `<div class="session-card">
+    <div class="session-title">${esc(s.title)}</div>
+    <div class="session-meta">
+      <span><span class="badge badge-${active?'online':'offline'}">${s.status}</span></span>
+      ${s.atlas_object_id?`<span>Atlas: ${esc(s.atlas_object_id)}</span>`:''}
+      <span>Started ${timeAgo(s.created_at)}</span>
+      ${s.participants?.length?`<span>${s.participants.length} participant${s.participants.length!==1?'s':''}</span>`:''}
+    </div>
+    ${s.description?`<div style="font-size:12px;color:#5a8ab0;margin-bottom:8px">${esc(s.description)}</div>`:''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${active&&ME?`<button class="primary" onclick="joinSession('${s.id}')">Join</button>`:''}
+      ${active&&ME?`<button onclick="leaveSession('${s.id}')">Leave</button>`:''}
+      ${active&&(ME?.role==='owner'||s.creator_id===ME?.id)?`<button onclick="closeSession('${s.id}')">Close</button>`:''}
+      ${s.notes?`<button onclick="alert(${JSON.stringify(s.notes)})">Notes</button>`:''}
+    </div>
+  </div>`;
+}
+
+function showNewSession(){ document.getElementById('newSessionForm').style.display=''; document.getElementById('sessTitle').focus(); }
+
+async function createSession(){
+  if(!ME){ alert('Register first.'); return; }
+  const title=document.getElementById('sessTitle').value.trim();
+  if(!title){ alert('Title required.'); return; }
+  const desc=document.getElementById('sessDesc').value.trim();
+  const atlas=document.getElementById('sessAtlas').value.trim();
+  try{
+    const r=await fetch('/api/builders/sessions/create',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({title,description:desc,atlas_object_id:atlas,creator_id:ME.id,creator_name:ME.name})});
+    const d=await r.json();
+    if(d.error){ alert(d.error); return; }
+    document.getElementById('newSessionForm').style.display='none';
+    document.getElementById('sessTitle').value='';
+    document.getElementById('sessDesc').value='';
+    document.getElementById('sessAtlas').value='';
+    loadSessions();
+  }catch(e){ alert('Network error'); }
+}
+
+async function joinSession(sid){
+  if(!ME) return;
+  await fetch('/api/builders/sessions/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sid,builder_id:ME.id,builder_name:ME.name})});
+  loadSessions(); loadActivity();
+}
+async function leaveSession(sid){
+  if(!ME) return;
+  await fetch('/api/builders/sessions/leave',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sid,builder_id:ME.id})});
+  loadSessions();
+}
+async function closeSession(sid){
+  if(!confirm('Close this session?')) return;
+  await fetch('/api/builders/sessions/close',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sid,requested_by:ME?.id})});
+  loadSessions();
+}
+
+// ── Activity tab ──────────────────────────────────────────────────────────────
+async function loadActivity(){
+  try{
+    const r=await fetch('/api/builders/activity');
+    const d=await r.json();
+    document.getElementById('statEvents').textContent=d.total||0;
+    const el=document.getElementById('activityList');
+    const evts=d.events||[];
+    if(!evts.length){ el.innerHTML='<div class="empty">No activity yet.</div>'; return; }
+    el.innerHTML=evts.map(e=>`
+      <div class="activity-row">
+        <div class="act-time">${timeAgo(e.ts)}</div>
+        <div class="act-builder">${esc(e.builder_name||'System')}</div>
+        <div class="act-msg">${esc(e.message)}</div>
+        <div class="act-type"><span class="badge badge-${actBadge(e.type)}">${e.type||''}</span></div>
+      </div>`).join('');
+  }catch(e){ document.getElementById('activityList').innerHTML='<div class="empty">Could not load activity.</div>'; }
+}
+
+function actBadge(t){return t==='join'?'online':t==='leave'||t==='remove'?'offline':t==='session'?'editor':'viewer'}
+
+// ── Invite tab ────────────────────────────────────────────────────────────────
+async function inviteBuilder(){
+  const name=document.getElementById('invName').value.trim();
+  const role=document.getElementById('invRole').value;
+  const emoji=document.getElementById('invEmoji').value.trim()||'🔭';
+  if(!name){ alert('Name required'); return; }
+  try{
+    const r=await fetch('/api/builders/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,role,emoji,added_by:ME?.id})});
+    const d=await r.json();
+    if(d.error){ alert(d.error); return; }
+    document.getElementById('invName').value='';
+    document.getElementById('invEmoji').value='';
+    alert(`Builder "${name}" added.`);
+    loadBuilders();
+  }catch(e){ alert('Network error'); }
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    const tabs=['builders','sessions','activity','invite'];
+    t.classList.toggle('active',tabs[i]===name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p=>{
+    p.classList.toggle('active',p.id==='tab-'+name);
+  });
+  if(name==='activity') loadActivity();
+  if(name==='sessions') loadSessions();
+  if(name==='builders') loadBuilders();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function avatarBg(name){
+  const colors=['#0d3050','#1a0a30','#0a2020','#2a1000','#0a1a00','#200a20'];
+  let h=0; for(const c of (name||'?')) h=(h*31+c.charCodeAt(0))%colors.length;
+  return colors[Math.abs(h)%colors.length];
+}
+function initials(name){ return (name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function timeAgo(ts){
+  if(!ts) return '—';
+  const d=typeof ts==='number'?new Date(ts*1000):new Date(ts);
+  const s=Math.floor((Date.now()-d)/1000);
+  if(s<60) return 'just now';
+  if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+
+init();
+// Refresh builders every 30s for live presence
+setInterval(()=>{ loadBuilders(); }, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Knowledge Graph — Henceforth Discover</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#061018;color:#c8d8e8;font-family:'Segoe UI',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+a{color:#82d6ff;text-decoration:none}
+nav{background:#0b1b2a;border-bottom:1px solid #1f435c;padding:8px 14px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:12px;flex-shrink:0}
+nav span{color:#1f435c}
+.toolbar{background:#0a1520;border-bottom:1px solid #1f435c;padding:8px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
+.toolbar select,.toolbar input{background:#061018;border:1px solid #1f435c;color:#c8d8e8;padding:4px 8px;border-radius:4px;font-size:12px}
+button{background:#1f435c;border:1px solid #2a5a7c;color:#c8d8e8;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px}
+button:hover{background:#2a5a7c}
+button.active{background:#0d5080;border-color:#1a7ab8}
+.canvas-wrap{flex:1;position:relative;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.legend{position:absolute;top:10px;right:10px;background:#0b1b2aee;border:1px solid #1f435c;border-radius:6px;padding:10px 14px;font-size:11px;min-width:160px}
+.legend-title{color:#82d6ff;font-weight:700;margin-bottom:8px;font-size:12px}
+.legend-row{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.legend-line{width:24px;height:2px;flex-shrink:0}
+.info-panel{position:absolute;bottom:0;left:0;right:0;background:#0b1b2af0;border-top:1px solid #1f435c;padding:10px 16px;font-size:12px;transform:translateY(100%);transition:transform .2s;max-height:220px;overflow-y:auto}
+.info-panel.open{transform:translateY(0)}
+.info-title{font-size:14px;font-weight:700;color:#82d6ff;margin-bottom:6px}
+.info-row{display:flex;gap:10px;margin-bottom:4px}
+.info-label{color:#5a8ab0;min-width:110px}
+.chip{display:inline-block;background:#0a2030;border:1px solid #1f435c;border-radius:3px;padding:1px 7px;font-size:10px;margin:1px}
+.stats-bar{position:absolute;top:10px;left:10px;background:#0b1b2aee;border:1px solid #1f435c;border-radius:6px;padding:8px 12px;font-size:11px;color:#5a8ab0;line-height:1.7}
+.stats-bar span{color:#82d6ff;font-weight:700}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">Workspace</a><span>|</span>
+  <a href="/doctor.html">Doctor</a><span>|</span>
+  <a href="/meta.html">Meta Lab</a><span>|</span>
+  <a href="/challenges.html" style="color:#f4a44a">Challenges</a><span>|</span>
+  <a href="/relationships.html" style="color:#c084fc">Relationships</a><span>|</span>
+  <a href="/passport.html" style="color:#72d4a8">Passport</a><span>|</span>
+  <a href="/ledger.html" style="color:#ffcf75">Ledger</a><span>|</span>
+  <a href="/council.html" style="color:#e8a842">Council</a><span>|</span>
+  <a href="/simulation.html" style="color:#e872d4">Simulations</a><span>|</span>
+  <a href="/routing.html" style="color:#f472b6">Routing</a><span>|</span>
+  <a href="/graph.html" style="color:#a78bfa;font-weight:700">Graph</a><span>|</span>
+  <a href="/billing.html" style="color:#34d399">Billing</a><span>|</span>
+  <a href="/builders.html" style="color:#fb923c">Builders</a>
+  <span>|</span>
+  <a href="/departments.html" style="color:#60a5fa">Departments</a>
+  <span>|</span>
+  <a href="/demo.html" style="color:#38bdf8">Demo</a>
+</nav>
+
+<div class="toolbar">
+  <label style="font-size:12px;color:#5a8ab0">Project:</label>
+  <select id="projectFilter" onchange="loadGraph()">
+    <option value="">All projects</option>
+  </select>
+  <label style="font-size:12px;color:#5a8ab0">Show:</label>
+  <select id="edgeFilter" onchange="render()">
+    <option value="">All edges</option>
+    <option value="routed_to">Dept routing</option>
+    <option value="sourced_from">Sources</option>
+    <option value="relates_to">Relationships</option>
+    <option value="proofed_by">Ledger proofs</option>
+  </select>
+  <input id="nodeSearch" placeholder="Search nodes…" style="width:160px" oninput="highlightSearch()">
+  <button onclick="resetView()">⌂ Reset</button>
+  <button id="btnPhysics" class="active" onclick="togglePhysics()">⚡ Physics</button>
+  <button onclick="loadGraph()">↺ Reload</button>
+  <span style="font-size:11px;color:#5a8ab0;margin-left:8px">Scroll=zoom · Drag=pan · Click node=inspect</span>
+</div>
+
+<div class="canvas-wrap" id="wrap">
+  <canvas id="c"></canvas>
+
+  <div class="stats-bar" id="statsBar">Loading…</div>
+
+  <div class="legend">
+    <div class="legend-title">Node Types</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#82d6ff"></div>Atlas Object</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#a78bfa"></div>Department</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#72d4a8"></div>Source</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#ffcf75"></div>Ledger Proof</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#f4a44a"></div>Chronicle</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#e872d4"></div>Simulation</div>
+    <div style="margin-top:10px" class="legend-title">Edges</div>
+    <div class="legend-row"><div class="legend-line" style="background:#82d6ff44"></div>routed_to</div>
+    <div class="legend-row"><div class="legend-line" style="background:#72d4a888"></div>sourced_from</div>
+    <div class="legend-row"><div class="legend-line" style="background:#c084fc88"></div>relates_to</div>
+    <div class="legend-row"><div class="legend-line" style="background:#ffcf7566"></div>proofed_by</div>
+    <div class="legend-row"><div class="legend-line" style="background:#aaaaaa55"></div>other</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <div id="infoContent"></div>
+  </div>
+</div>
+
+<script>
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+const wrap=document.getElementById('wrap');
+
+let nodes=[], edges=[], sim={}, running=true;
+let pan={x:0,y:0}, scale=1;
+let drag=null, panDrag=null, lastMouse={x:0,y:0};
+let highlighted=new Set(), selectedNode=null;
+
+// Colors
+const NODE_COLOR={
+  atlas_object:'#82d6ff', department:'#a78bfa', source:'#72d4a8',
+  ledger_proof:'#ffcf75', chronicle:'#f4a44a', simulation_plan:'#e872d4',
+  discovery_run:'#82d6ff', project_genesis:'#82d6ff', pdf_ingest:'#82d6ff',
+  idea:'#82d6ff', url_metadata:'#82d6ff',
+  default:'#5a8ab0'
+};
+const EDGE_COLOR={
+  routed_to:'rgba(130,214,255,0.25)', sourced_from:'rgba(114,212,168,0.5)',
+  relates_to:'rgba(192,132,252,0.5)', proofed_by:'rgba(255,207,117,0.35)',
+  recorded_in:'rgba(244,164,74,0.35)', default:'rgba(170,170,170,0.2)'
+};
+const EV_RING={Known:'#72d4a8',Supported:'#82d6ff',Possible:'#e8d472',Speculative:'#e8a842',Rejected:'#ff9999'};
+
+async function loadGraph(){
+  const proj=document.getElementById('projectFilter').value;
+  const url='/api/graph/full'+(proj?'?project='+encodeURIComponent(proj):'');
+  const r=await fetch(url);
+  const d=await r.json();
+
+  // Populate project filter once
+  const sel=document.getElementById('projectFilter');
+  if(sel.options.length<=1){
+    (d.projects||[]).forEach(p=>{
+      const o=document.createElement('option');
+      o.value=p; o.textContent=p;
+      if(p===proj) o.selected=true;
+      sel.appendChild(o);
+    });
+  }
+
+  // Build node positions (force-directed seed)
+  const W=canvas.offsetWidth, H=canvas.offsetHeight;
+  const existing={};
+  nodes.forEach(n=>existing[n.id]={x:n.x,y:n.y});
+
+  nodes=(d.nodes||[]).map(n=>({
+    ...n,
+    x: existing[n.id]?.x ?? (W/2 + (Math.random()-0.5)*W*0.6),
+    y: existing[n.id]?.y ?? (H/2 + (Math.random()-0.5)*H*0.6),
+    vx:0, vy:0,
+    r: nodeRadius(n)
+  }));
+  edges=d.edges||[];
+
+  // Build adjacency for simulation
+  sim.nodeMap={};
+  nodes.forEach(n=>sim.nodeMap[n.id]=n);
+
+  document.getElementById('statsBar').innerHTML=
+    `Nodes: <span>${d.node_count}</span> &nbsp; Edges: <span>${d.edge_count}</span>`;
+
+  resetView();
+  startPhysics();
+}
+
+function nodeRadius(n){
+  const deg=n.degree||0;
+  const base= n.type==='department'?8 : n.type==='ledger_proof'?4 : n.type==='chronicle'?4 : n.type==='source'?5 : 7;
+  return Math.min(base + Math.sqrt(deg)*1.2, 20);
+}
+
+function nodeColor(n){
+  return NODE_COLOR[n.type] || NODE_COLOR[n.object_type] || NODE_COLOR.default;
+}
+
+function edgeColor(rel){
+  return EDGE_COLOR[rel] || EDGE_COLOR.default;
+}
+
+// Force-directed physics
+let physicsTimer=null;
+function startPhysics(){
+  if(physicsTimer) cancelAnimationFrame(physicsTimer);
+  running=true;
+  tick();
+}
+function stopPhysics(){ running=false; if(physicsTimer) cancelAnimationFrame(physicsTimer); }
+function togglePhysics(){
+  running=!running;
+  document.getElementById('btnPhysics').classList.toggle('active',running);
+  if(running) tick(); else render();
+}
+
+function tick(){
+  if(!running){ render(); return; }
+  simulate();
+  render();
+  physicsTimer=requestAnimationFrame(tick);
+}
+
+function simulate(){
+  const k=80, repel=3200, gravity=0.03;
+  const W=canvas.offsetWidth/2, H=canvas.offsetHeight/2;
+  // Reset forces
+  nodes.forEach(n=>{n.fx=0;n.fy=0;});
+  // Repulsion
+  for(let i=0;i<nodes.length;i++){
+    for(let j=i+1;j<nodes.length;j++){
+      const a=nodes[i],b=nodes[j];
+      const dx=b.x-a.x, dy=b.y-a.y;
+      const d2=dx*dx+dy*dy+1;
+      const f=repel/d2;
+      const nx=dx/Math.sqrt(d2), ny=dy/Math.sqrt(d2);
+      a.fx-=f*nx; a.fy-=f*ny;
+      b.fx+=f*nx; b.fy+=f*ny;
+    }
+  }
+  // Spring attraction for edges
+  const edgeFilter=document.getElementById('edgeFilter').value;
+  edges.forEach(e=>{
+    if(edgeFilter&&e.relation!==edgeFilter) return;
+    const a=sim.nodeMap[e.from], b=sim.nodeMap[e.to];
+    if(!a||!b) return;
+    const dx=b.x-a.x, dy=b.y-a.y;
+    const d=Math.sqrt(dx*dx+dy*dy)+0.1;
+    const f=(d-k)/d*0.5;
+    a.fx+=f*dx; a.fy+=f*dy;
+    b.fx-=f*dx; b.fy-=f*dy;
+  });
+  // Gravity toward center
+  nodes.forEach(n=>{
+    n.fx+=(W-n.x)*gravity;
+    n.fy+=(H-n.y)*gravity;
+  });
+  // Integrate
+  const damp=0.85;
+  nodes.forEach(n=>{
+    if(n===drag) return;
+    n.vx=(n.vx+n.fx*0.1)*damp;
+    n.vy=(n.vy+n.fy*0.1)*damp;
+    n.x+=n.vx; n.y+=n.vy;
+  });
+}
+
+function render(){
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  ctx.translate(pan.x,pan.y);
+  ctx.scale(scale,scale);
+
+  const edgeFilter=document.getElementById('edgeFilter').value;
+  const searchActive=highlighted.size>0;
+
+  // Draw edges
+  edges.forEach(e=>{
+    if(edgeFilter&&e.relation!==edgeFilter) return;
+    const a=sim.nodeMap[e.from], b=sim.nodeMap[e.to];
+    if(!a||!b) return;
+    const dimmed=searchActive&&!highlighted.has(a.id)&&!highlighted.has(b.id);
+    ctx.globalAlpha=dimmed?0.08:0.7;
+    ctx.strokeStyle=edgeColor(e.relation);
+    ctx.lineWidth=1/scale;
+    ctx.beginPath();
+    ctx.moveTo(a.x,a.y);
+    // Arrow
+    const dx=b.x-a.x, dy=b.y-a.y;
+    const d=Math.sqrt(dx*dx+dy*dy)+0.1;
+    const ux=dx/d, uy=dy/d;
+    const ex=b.x-ux*b.r, ey=b.y-uy*b.r;
+    ctx.lineTo(ex,ey);
+    ctx.stroke();
+    // Arrowhead
+    if(scale>0.4){
+      const ah=6/scale;
+      ctx.fillStyle=edgeColor(e.relation);
+      ctx.beginPath();
+      ctx.moveTo(ex,ey);
+      ctx.lineTo(ex-ux*ah+uy*ah*0.4, ey-uy*ah-ux*ah*0.4);
+      ctx.lineTo(ex-ux*ah-uy*ah*0.4, ey-uy*ah+ux*ah*0.4);
+      ctx.closePath();
+      ctx.fill();
+    }
+  });
+
+  // Draw nodes
+  nodes.forEach(n=>{
+    const isSelected=n===selectedNode;
+    const isHighlighted=highlighted.has(n.id);
+    const dimmed=searchActive&&!isHighlighted&&!isSelected;
+    ctx.globalAlpha=dimmed?0.15:1;
+    const col=nodeColor(n);
+    // Evidence ring
+    if(n.evidence_label&&EV_RING[n.evidence_label]){
+      ctx.strokeStyle=EV_RING[n.evidence_label];
+      ctx.lineWidth=(isSelected?3:1.5)/scale;
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,n.r+2/scale,0,Math.PI*2);
+      ctx.stroke();
+    }
+    // Node circle
+    ctx.fillStyle=isSelected?'#ffffff':col;
+    ctx.shadowColor=isSelected?'#ffffff':col;
+    ctx.shadowBlur=isSelected?12:4;
+    ctx.beginPath();
+    ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur=0;
+    // Label
+    if(scale>0.35||(isSelected||isHighlighted)){
+      const fs=Math.max(9,Math.min(13,n.r*1.4))/scale;
+      ctx.font=`${isSelected?'bold ':''} ${fs}px Segoe UI,sans-serif`;
+      ctx.fillStyle=dimmed?'#2a4060':'#c8d8e8';
+      ctx.textAlign='center';
+      ctx.textBaseline='top';
+      const label=(n.label||n.id).length>28?(n.label||n.id).slice(0,26)+'…':(n.label||n.id);
+      ctx.fillText(label, n.x, n.y+n.r+2/scale);
+    }
+  });
+
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+// Interaction
+function toWorld(cx,cy){
+  return {x:(cx-pan.x)/scale, y:(cy-pan.y)/scale};
+}
+function hitTest(wx,wy){
+  for(let i=nodes.length-1;i>=0;i--){
+    const n=nodes[i];
+    const dx=wx-n.x, dy=wy-n.y;
+    if(dx*dx+dy*dy<=n.r*n.r) return n;
+  }
+  return null;
+}
+
+canvas.addEventListener('mousedown',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const cx=e.clientX-rect.left, cy=e.clientY-rect.top;
+  const {x,y}=toWorld(cx,cy);
+  const hit=hitTest(x,y);
+  if(hit){
+    drag=hit;
+  } else {
+    panDrag={sx:e.clientX-pan.x, sy:e.clientY-pan.y};
+  }
+  lastMouse={x:e.clientX,y:e.clientY};
+});
+
+canvas.addEventListener('mousemove',e=>{
+  if(drag){
+    const rect=canvas.getBoundingClientRect();
+    const {x,y}=toWorld(e.clientX-rect.left, e.clientY-rect.top);
+    drag.x=x; drag.y=y; drag.vx=0; drag.vy=0;
+    if(!running) render();
+  } else if(panDrag){
+    pan.x=e.clientX-panDrag.sx;
+    pan.y=e.clientY-panDrag.sy;
+    if(!running) render();
+  }
+});
+
+canvas.addEventListener('mouseup',e=>{
+  const moved=Math.abs(e.clientX-lastMouse.x)+Math.abs(e.clientY-lastMouse.y);
+  if(moved<5&&drag){
+    selectNode(drag);
+  }
+  drag=null; panDrag=null;
+});
+
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect();
+  const cx=e.clientX-rect.left, cy=e.clientY-rect.top;
+  const factor=e.deltaY<0?1.12:0.88;
+  const newScale=Math.max(0.1,Math.min(5,scale*factor));
+  pan.x=cx-(cx-pan.x)*(newScale/scale);
+  pan.y=cy-(cy-pan.y)*(newScale/scale);
+  scale=newScale;
+  if(!running) render();
+},{passive:false});
+
+function selectNode(n){
+  selectedNode=n;
+  const panel=document.getElementById('infoPanel');
+  const content=document.getElementById('infoContent');
+  panel.classList.add('open');
+  const conn_out=edges.filter(e=>e.from===n.id);
+  const conn_in=edges.filter(e=>e.to===n.id);
+  content.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="info-title">${esc(n.label||n.id)}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <span class="chip" style="border-color:#2a5a7c">${esc(n.type||n.object_type||'?')}</span>
+          ${n.evidence_label?`<span class="chip" style="border-color:${EV_RING[n.evidence_label]||'#1f435c'};color:${EV_RING[n.evidence_label]||'#c8d8e8'}">${n.evidence_label}</span>`:''}
+          <span class="chip">${n.degree||0} connections</span>
+        </div>
+      </div>
+      <button onclick="document.getElementById('infoPanel').classList.remove('open');selectedNode=null;render()">✕</button>
+    </div>
+    ${n.departments&&n.departments.length?`<div class="info-row"><div class="info-label">Departments</div><div>${n.departments.map(d=>`<span class="chip" style="color:#a78bfa">${esc(d.replace(/_/g,' '))}</span>`).join('')}</div></div>`:''}
+    ${conn_out.length?`<div class="info-row"><div class="info-label">→ Outgoing (${conn_out.length})</div><div>${conn_out.slice(0,8).map(e=>`<span class="chip">${esc(e.relation)}: ${esc((sim.nodeMap[e.to]?.label||e.to).slice(0,30))}</span>`).join('')}${conn_out.length>8?`<span class="chip">+${conn_out.length-8} more</span>`:''}</div></div>`:''}
+    ${conn_in.length?`<div class="info-row"><div class="info-label">← Incoming (${conn_in.length})</div><div>${conn_in.slice(0,8).map(e=>`<span class="chip">${esc(e.relation)}: ${esc((sim.nodeMap[e.from]?.label||e.from).slice(0,30))}</span>`).join('')}${conn_in.length>8?`<span class="chip">+${conn_in.length-8} more</span>`:''}</div></div>`:''}
+    ${n.id.startsWith('ATLAS')?`<div class="info-row"><div class="info-label">Links</div><div><a href="/relationships.html?id=${esc(n.id)}" style="font-size:12px">Edit relationships ↗</a></div></div>`:''}
+  `;
+  if(!running) render();
+}
+
+function highlightSearch(){
+  const q=document.getElementById('nodeSearch').value.toLowerCase().trim();
+  highlighted.clear();
+  if(q){
+    nodes.forEach(n=>{
+      if((n.label||'').toLowerCase().includes(q)||(n.id||'').toLowerCase().includes(q)||(n.type||'').toLowerCase().includes(q)){
+        highlighted.add(n.id);
+      }
+    });
+  }
+  if(!running) render();
+}
+
+function resetView(){
+  const W=canvas.offsetWidth, H=canvas.offsetHeight;
+  pan={x:W/2,y:H/2}; scale=0.75;
+  if(!running) render();
+}
+
+// Canvas resize
+function resize(){
+  canvas.width=wrap.offsetWidth;
+  canvas.height=wrap.offsetHeight;
+  if(!running) render();
+}
+
+const ro=new ResizeObserver(resize);
+ro.observe(wrap);
+resize();
+
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+loadGraph();
+</script>
+</body>
+</html>

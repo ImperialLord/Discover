@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Architecture Council — Henceforth Discover</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#061018;color:#c8d8e8;font-family:'Segoe UI',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+a{color:#82d6ff;text-decoration:none}
+nav{background:#0b1b2a;border-bottom:1px solid #1f435c;padding:10px 18px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+nav a{color:#82d6ff;font-size:13px}nav span{color:#1f435c}
+h2{color:#82d6ff;font-size:15px;font-weight:600}
+h3{color:#c8d8e8;font-size:13px;font-weight:600}
+.layout{display:flex;flex:1;height:calc(100vh - 42px)}
+.sidebar{width:300px;min-width:220px;background:#0b1b2a;border-right:1px solid #1f435c;display:flex;flex-direction:column;overflow:hidden}
+.sidebar-hd{padding:12px 14px;border-bottom:1px solid #1f435c;display:flex;align-items:center;justify-content:space-between}
+.sidebar-body{flex:1;overflow-y:auto}
+.main{flex:1;overflow-y:auto;padding:20px}
+button{background:#1f435c;border:1px solid #2a5a7c;color:#c8d8e8;padding:5px 12px;border-radius:4px;cursor:pointer;font-size:12px}
+button:hover{background:#2a5a7c}
+button.primary{background:#0d5080;border-color:#1a7ab8;color:#fff}
+button.primary:hover{background:#1a7ab8}
+button.danger{background:#5c1f1f;border-color:#8c2a2a;color:#ffaaaa}
+button.danger:hover{background:#8c2a2a}
+input,textarea,select{background:#061018;border:1px solid #1f435c;color:#c8d8e8;padding:6px 9px;border-radius:4px;font-size:13px;font-family:inherit;width:100%}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#82d6ff}
+.panel{background:#0b1b2a;border:1px solid #1f435c;border-radius:6px;padding:16px;margin-bottom:14px}
+.thread-item{padding:10px 14px;border-bottom:1px solid #0d2235;cursor:pointer;transition:background .15s}
+.thread-item:hover{background:#102030}
+.thread-item.active{background:#132c40;border-left:3px solid #82d6ff}
+.thread-item .tt{font-size:13px;font-weight:600;color:#c8d8e8;margin-bottom:3px}
+.thread-item .ts{font-size:11px;color:#5a8ab0}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-open{background:#0d4030;color:#72d4a8}
+.badge-decided{background:#1a3d5c;color:#82d6ff}
+.badge-round{background:#2a2a0a;color:#e8d472}
+.vote-approve{background:#0d4030;color:#72d4a8}
+.vote-reject{background:#5c1f1f;color:#ff9999}
+.vote-abstain{background:#1f435c;color:#82a6c8}
+.vote-defer{background:#3d2a0a;color:#e8a842}
+.pos-card{background:#061018;border:1px solid #1f435c;border-radius:5px;padding:12px;margin-bottom:10px}
+.pos-role{font-size:12px;font-weight:700;color:#82d6ff;margin-bottom:5px}
+.pos-text{font-size:12px;color:#a0c0d8;line-height:1.5;margin-bottom:8px}
+.pos-meta{font-size:11px;color:#5a8ab0;display:flex;gap:10px;align-items:center}
+.conf-bar{height:5px;border-radius:3px;background:#1f435c;margin-top:4px}
+.conf-fill{height:100%;border-radius:3px;background:#82d6ff}
+.tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid #1f435c;padding-bottom:8px}
+.tab{padding:5px 14px;border-radius:4px 4px 0 0;cursor:pointer;font-size:12px;color:#5a8ab0}
+.tab.active{background:#1f435c;color:#c8d8e8}
+.form-row{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+.form-row label{font-size:12px;color:#82a6c8;white-space:nowrap;min-width:90px}
+.empty{color:#5a8ab0;font-size:13px;padding:20px;text-align:center}
+.vote-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.vote-row .voter{font-size:12px;color:#82d6ff;min-width:130px}
+.vote-row .reason{font-size:11px;color:#5a8ab0}
+.tally{display:flex;gap:14px;margin-bottom:14px}
+.tally-box{text-align:center;padding:8px 14px;border-radius:5px;font-size:11px}
+.tally-n{font-size:22px;font-weight:700;display:block}
+.decision-box{background:#0a2a0a;border:1px solid #1f5c3a;border-radius:5px;padding:14px;margin-bottom:14px}
+.decision-box .label{font-size:11px;color:#72d4a8;margin-bottom:6px;font-weight:700}
+.decision-box .text{font-size:13px;color:#c8d8e8;line-height:1.5}
+.history-round{border-left:3px solid #1f435c;padding-left:12px;margin-bottom:14px}
+.history-round .rn{font-size:11px;color:#5a8ab0;margin-bottom:8px}
+#startForm{display:flex;flex-direction:column;gap:10px}
+.speak-row{display:flex;gap:8px;margin-top:8px}
+.speak-row select{flex:0 0 160px}
+.speak-row textarea{flex:1;min-height:54px}
+.speak-row input[type=range]{flex:0 0 100px}
+.progress-bar{height:4px;background:#1f435c;border-radius:2px;margin-top:6px}
+.progress-fill{height:100%;border-radius:2px;background:#82d6ff;transition:width .3s}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">Workspace</a><span>|</span>
+  <a href="/doctor.html">Doctor</a><span>|</span>
+  <a href="/meta.html">Meta Lab</a><span>|</span>
+  <a href="/challenges.html" style="color:#f4a44a">Challenges</a><span>|</span>
+  <a href="/relationships.html" style="color:#c084fc">Relationships</a><span>|</span>
+  <a href="/passport.html" style="color:#72d4a8">Passport</a><span>|</span>
+  <a href="/ledger.html" style="color:#ffcf75">Ledger</a><span>|</span>
+  <a href="/council.html" style="color:#e8a842;font-weight:700">Council</a><span>|</span>
+  <a href="/simulation.html" style="color:#e872d4">Simulations</a><span>|</span>
+  <a href="/routing.html" style="color:#f472b6">Routing</a><span>|</span>
+  <a href="/graph.html" style="color:#a78bfa">Graph</a><span>|</span>
+  <a href="/billing.html" style="color:#34d399">Billing</a><span>|</span>
+  <a href="/builders.html" style="color:#fb923c">Builders</a>
+  <span>|</span>
+  <a href="/departments.html" style="color:#60a5fa">Departments</a>
+  <span>|</span>
+  <a href="/demo.html" style="color:#38bdf8">Demo</a>
+</nav>
+<div class="layout">
+  <!-- Sidebar: thread list -->
+  <div class="sidebar">
+    <div class="sidebar-hd">
+      <h2>⚖️ Deliberations</h2>
+      <button class="primary" onclick="showNew()">+ New</button>
+    </div>
+    <div id="threadList" class="sidebar-body"></div>
+  </div>
+
+  <!-- Main area -->
+  <div class="main" id="main">
+    <div id="newPanel" style="display:none" class="panel">
+      <h2 style="margin-bottom:14px">Start a New Deliberation</h2>
+      <div id="startForm">
+        <div class="form-row">
+          <label>Title</label>
+          <input id="nTitle" placeholder="What is this deliberation about?">
+        </div>
+        <div class="form-row">
+          <label>Question</label>
+          <textarea id="nQuestion" rows="2" placeholder="Pose the central question to the council…"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Atlas Object</label>
+          <input id="nAtlas" list="atlasList" placeholder="Optional object ID or title">
+          <datalist id="atlasList"></datalist>
+        </div>
+        <div class="form-row">
+          <label>Project</label>
+          <input id="nProject" value="ARGOS">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="primary" onclick="startThread()">Convene Council</button>
+          <button onclick="hideNew()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="threadPanel" style="display:none"></div>
+
+    <div id="emptyState" class="empty" style="margin-top:60px">
+      Select a deliberation or start a new one.<br><br>
+      <span style="font-size:12px">The Architecture Council reviews decisions, resolves conflicts,<br>and records the reasoning behind every major choice.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+let threads=[], currentThread=null, allObjects=[];
+
+async function init(){
+  await loadObjects();
+  await loadThreads();
+}
+
+async function loadObjects(){
+  try{
+    const r=await fetch('/api/atlas/objects');
+    const d=await r.json();
+    allObjects=d.objects||[];
+    const dl=document.getElementById('atlasList');
+    dl.innerHTML=allObjects.map(o=>`<option value="${o.id}">${o.title} (${o.id})</option>`).join('');
+  }catch(e){}
+}
+
+async function loadThreads(){
+  const r=await fetch('/api/council');
+  const d=await r.json();
+  threads=d.threads||[];
+  renderList();
+}
+
+function renderList(){
+  const el=document.getElementById('threadList');
+  if(!threads.length){el.innerHTML='<div class="empty">No deliberations yet.</div>';return}
+  el.innerHTML=threads.map(t=>`
+    <div class="thread-item${currentThread&&currentThread.id===t.id?' active':''}" onclick="openThread('${t.id}')">
+      <div class="tt">${esc(t.title)}</div>
+      <div class="ts">
+        <span class="badge badge-${t.status==='decided'?'decided':'open'}">${t.status}</span>
+        <span class="badge badge-round">R${t.round||1}</span>
+        &nbsp;${reltime(t.created_at)}
+      </div>
+    </div>`).join('');
+}
+
+async function openThread(id){
+  const r=await fetch('/api/council/'+id);
+  currentThread=await r.json();
+  renderList();
+  showThread();
+}
+
+function showThread(){
+  document.getElementById('newPanel').style.display='none';
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('threadPanel').style.display='block';
+  renderThread();
+}
+
+function renderThread(){
+  const t=currentThread;
+  const votes=t.votes||[];
+  const positions=t.positions||[];
+  const tally={approve:0,reject:0,abstain:0,defer:0};
+  votes.forEach(v=>tally[v.verdict]=(tally[v.verdict]||0)+1);
+  const total=votes.length;
+  const decided=t.status==='decided';
+
+  // Vote progress
+  const pct=positions.length?Math.round(votes.length/positions.length*100):0;
+
+  document.getElementById('threadPanel').innerHTML=`
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:10px">
+    <div>
+      <h2 style="margin-bottom:5px">${esc(t.title)}</h2>
+      <div style="font-size:12px;color:#5a8ab0">${esc(t.question)}</div>
+      ${t.atlas_object_id?`<div style="font-size:11px;color:#5a8ab0;margin-top:3px">Atlas: <span style="color:#82d6ff">${esc(t.atlas_object_id)}</span></div>`:''}
+    </div>
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <span class="badge badge-${decided?'decided':'open'}">${t.status}</span>
+      <span class="badge badge-round">Round ${t.round||1}</span>
+      ${!decided?`<button onclick="advanceRound()">Next Round</button>`:''}
+    </div>
+  </div>
+
+  ${decided&&t.decision?`<div class="decision-box"><div class="label">⚖️ COUNCIL DECISION</div><div class="text">${esc(t.decision)}</div></div>`:''}
+
+  <div class="tally">
+    <div class="tally-box" style="background:#0d4030;border:1px solid #1f5c3a"><span class="tally-n" style="color:#72d4a8">${tally.approve||0}</span>Approve</div>
+    <div class="tally-box" style="background:#3d0a0a;border:1px solid #5c1f1f"><span class="tally-n" style="color:#ff9999">${tally.reject||0}</span>Reject</div>
+    <div class="tally-box" style="background:#1a1a1a;border:1px solid #2a2a2a"><span class="tally-n" style="color:#82a6c8">${tally.abstain||0}</span>Abstain</div>
+    <div class="tally-box" style="background:#2a1a00;border:1px solid #5c3a0a"><span class="tally-n" style="color:#e8a842">${tally.defer||0}</span>Defer</div>
+    <div style="flex:1;display:flex;align-items:center;padding:0 10px">
+      <div style="width:100%">
+        <div style="font-size:11px;color:#5a8ab0;margin-bottom:4px">${votes.length}/${positions.length} voted</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'tab-positions')">Positions</div>
+    <div class="tab" onclick="switchTab(this,'tab-votes')">Votes</div>
+    <div class="tab" onclick="switchTab(this,'tab-history')">History</div>
+    ${!decided?`<div class="tab" onclick="switchTab(this,'tab-decide')">Record Decision</div>`:''}
+  </div>
+
+  <!-- Positions tab -->
+  <div id="tab-positions">
+    ${positions.map(p=>{
+      const myVote=votes.find(v=>v.role===p.role);
+      return `<div class="pos-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="pos-role">${esc(p.role)}</div>
+          ${myVote?`<span class="badge vote-${myVote.verdict}">${myVote.verdict}</span>`:'<span class="badge" style="background:#1f435c;color:#82a6c8">awaiting vote</span>'}
+        </div>
+        <div class="pos-text">${p.position?esc(p.position):'<em style="color:#3a6080">No position stated yet.</em>'}</div>
+        <div class="pos-meta">
+          <span>Confidence: ${Math.round((p.confidence||0.5)*100)}%</span>
+          ${p.timestamp?`<span>${reltime(p.timestamp)}</span>`:''}
+        </div>
+        <div class="conf-bar"><div class="conf-fill" style="width:${Math.round((p.confidence||0.5)*100)}%"></div></div>
+        ${!decided?`
+        <details style="margin-top:10px">
+          <summary style="font-size:11px;color:#5a8ab0;cursor:pointer">Edit position / cast vote</summary>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+            <textarea id="sp-${esc(p.role)}" rows="2" style="width:100%">${esc(p.position)}</textarea>
+            <div style="display:flex;gap:8px;align-items:center">
+              <label style="font-size:11px;color:#82a6c8">Confidence</label>
+              <input type="range" min="0" max="100" value="${Math.round((p.confidence||0.5)*100)}" id="sc-${esc(p.role)}" style="flex:1;width:auto">
+              <span id="sv-${esc(p.role)}" style="font-size:11px;color:#82d6ff">${Math.round((p.confidence||0.5)*100)}%</span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button onclick="speak('${esc(p.role)}')">Save Position</button>
+              <button class="vote-approve" style="border:1px solid #1f5c3a;cursor:pointer;border-radius:4px;padding:4px 10px;font-size:12px" onclick="vote('${esc(p.role)}','approve')">✓ Approve</button>
+              <button class="vote-reject" style="border:1px solid #5c1f1f;cursor:pointer;border-radius:4px;padding:4px 10px;font-size:12px" onclick="vote('${esc(p.role)}','reject')">✗ Reject</button>
+              <button class="vote-defer" style="border:1px solid #5c3a0a;cursor:pointer;border-radius:4px;padding:4px 10px;font-size:12px" onclick="vote('${esc(p.role)}','defer')">⏸ Defer</button>
+              <button class="vote-abstain" style="border:1px solid #2a3a4a;cursor:pointer;border-radius:4px;padding:4px 10px;font-size:12px" onclick="vote('${esc(p.role)}','abstain')">— Abstain</button>
+            </div>
+          </div>
+        </details>`:''}
+      </div>`;
+    }).join('')}
+  </div>
+
+  <!-- Votes tab -->
+  <div id="tab-votes" style="display:none">
+    ${votes.length?votes.map(v=>`
+      <div class="vote-row">
+        <div class="voter">${esc(v.role)}</div>
+        <span class="badge vote-${v.verdict}">${v.verdict}</span>
+        <div class="reason">${esc(v.reason||'')}</div>
+        <div style="margin-left:auto;font-size:11px;color:#3a6080">${reltime(v.timestamp)}</div>
+      </div>`).join('')
+    :'<div class="empty">No votes yet.</div>'}
+  </div>
+
+  <!-- History tab -->
+  <div id="tab-history" style="display:none">
+    ${(t.history||[]).slice().reverse().map(h=>`
+      <div class="history-round">
+        <div class="rn">Round ${h.round} — ${reltime(h.timestamp)}</div>
+        ${(h.positions||[]).filter(p=>p.position).map(p=>`
+          <div style="margin-bottom:6px">
+            <span style="font-size:11px;font-weight:700;color:#82d6ff">${esc(p.role)}</span>
+            <span style="font-size:11px;color:#a0c0d8"> — ${esc(p.position)}</span>
+          </div>`).join('')}
+        ${(h.votes||[]).length?`<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+          ${h.votes.map(v=>`<span class="badge vote-${v.verdict}">${esc(v.role)}: ${v.verdict}</span>`).join('')}
+        </div>`:''}
+      </div>`).join('')||'<div class="empty">No history yet.</div>'}
+  </div>
+
+  <!-- Decision tab -->
+  ${!decided?`<div id="tab-decide" style="display:none">
+    <div class="panel" style="max-width:600px">
+      <h3 style="margin-bottom:12px">Record Final Decision</h3>
+      <textarea id="decisionText" rows="4" placeholder="State the council's decision…" style="margin-bottom:10px">${t.decision||''}</textarea>
+      <button class="primary" onclick="recordDecision()">⚖️ Seal Decision</button>
+    </div>
+  </div>`:''}
+  `;
+
+  // Range slider live update
+  (t.positions||[]).forEach(p=>{
+    const sl=document.getElementById('sc-'+p.role);
+    const sv=document.getElementById('sv-'+p.role);
+    if(sl&&sv) sl.addEventListener('input',()=>sv.textContent=sl.value+'%');
+  });
+}
+
+function switchTab(el, tid){
+  el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const ids=['tab-positions','tab-votes','tab-history','tab-decide'];
+  ids.forEach(id=>{const d=document.getElementById(id);if(d)d.style.display='none'});
+  const target=document.getElementById(tid);
+  if(target)target.style.display='block';
+}
+
+function showNew(){
+  document.getElementById('newPanel').style.display='block';
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('threadPanel').style.display='none';
+}
+function hideNew(){
+  document.getElementById('newPanel').style.display='none';
+  if(currentThread) showThread(); else document.getElementById('emptyState').style.display='block';
+}
+
+async function startThread(){
+  const title=document.getElementById('nTitle').value.trim();
+  const question=document.getElementById('nQuestion').value.trim();
+  if(!title||!question){alert('Title and question required');return}
+  const btn=document.querySelector('#startForm button.primary');
+  btn.disabled=true;btn.textContent='Convening…';
+  try{
+    const r=await fetch('/api/council/start',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({title,question,atlas_object_id:document.getElementById('nAtlas').value.trim(),project:document.getElementById('nProject').value.trim()||'ARGOS'})});
+    const d=await r.json();
+    currentThread=d.thread;
+    await loadThreads();
+    hideNew();
+    showThread();
+  }catch(e){alert('Error: '+e)}
+  btn.disabled=false;btn.textContent='Convene Council';
+}
+
+async function speak(role){
+  const txt=document.getElementById('sp-'+role);
+  const sl=document.getElementById('sc-'+role);
+  if(!txt||!currentThread)return;
+  await fetch('/api/council/'+currentThread.id+'/speak',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({role,statement:txt.value,confidence:sl?sl.value/100:0.5})});
+  await refreshThread();
+}
+
+async function vote(role,verdict){
+  if(!currentThread)return;
+  const reason=prompt(`Reason for ${verdict} (optional):`)||'';
+  await fetch('/api/council/'+currentThread.id+'/vote',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({role,verdict,reason})});
+  await refreshThread();
+}
+
+async function recordDecision(){
+  const text=document.getElementById('decisionText').value.trim();
+  if(!text){alert('Enter a decision');return}
+  if(!confirm('Seal this decision? This closes the deliberation.'))return;
+  await fetch('/api/council/'+currentThread.id+'/decide',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({decision:text})});
+  await loadThreads();
+  await refreshThread();
+}
+
+async function advanceRound(){
+  if(!currentThread)return;
+  if(!confirm('Advance to next round? Current votes will be archived.'))return;
+  await fetch('/api/council/'+currentThread.id+'/advance',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+  await refreshThread();
+}
+
+async function refreshThread(){
+  if(!currentThread)return;
+  const r=await fetch('/api/council/'+currentThread.id);
+  currentThread=await r.json();
+  renderThread();
+}
+
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function reltime(ts){
+  if(!ts)return'';
+  try{
+    const d=new Date(ts),now=new Date(),diff=Math.floor((now-d)/1000);
+    if(diff<60)return'just now';
+    if(diff<3600)return Math.floor(diff/60)+'m ago';
+    if(diff<86400)return Math.floor(diff/3600)+'h ago';
+    return Math.floor(diff/86400)+'d ago';
+  }catch{return ts}
+}
+
+init();
+</script>
+</body>
+</html>

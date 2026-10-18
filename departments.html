@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Departments — Henceforth Discover</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d0d;color:#e8e8e8;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+.nav{display:flex;align-items:center;gap:10px;padding:12px 20px;background:#111;border-bottom:1px solid #222;flex-wrap:wrap;font-size:13px}
+.nav a{color:#aaa;text-decoration:none}.nav a:hover{color:#fff}
+.nav span{color:#333}
+header{padding:28px 28px 16px;border-bottom:1px solid #1e1e1e}
+header h1{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}
+header p{color:#666;font-size:13px}
+.stats{display:flex;gap:16px;padding:20px 28px;border-bottom:1px solid #1a1a1a;flex-wrap:wrap}
+.stat{background:#141414;border:1px solid #1e1e1e;border-radius:8px;padding:14px 20px;min-width:140px}
+.stat .label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.stat .value{font-size:22px;font-weight:700;color:#e8e8e8}
+.controls{display:flex;gap:10px;padding:16px 28px;align-items:center;flex-wrap:wrap}
+.search-wrap{position:relative;flex:1;max-width:320px}
+.search-wrap input{width:100%;background:#141414;border:1px solid #2a2a2a;color:#e8e8e8;padding:8px 12px 8px 32px;border-radius:6px;font-size:13px;outline:none}
+.search-wrap input:focus{border-color:#555}
+.search-wrap::before{content:'🔍';position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px}
+select{background:#141414;border:1px solid #2a2a2a;color:#e8e8e8;padding:8px 12px;border-radius:6px;font-size:13px;outline:none;cursor:pointer}
+select:focus{border-color:#555}
+.view-toggle{display:flex;gap:4px;margin-left:auto}
+.view-toggle button{background:#141414;border:1px solid #2a2a2a;color:#888;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:13px;transition:all .15s}
+.view-toggle button.active{background:#222;color:#e8e8e8;border-color:#444}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;padding:20px 28px}
+.list-view{display:flex;flex-direction:column;gap:0;padding:0 28px 28px}
+.dept-card{background:#111;border:1px solid #1e1e1e;border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s}
+.dept-card:hover{border-color:#333;transform:translateY(-1px)}
+.dept-card.selected{border-color:var(--dept-color)}
+.card-header{padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1a1a1a}
+.dept-emoji{font-size:22px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#0d0d0d;border-radius:8px;border:1px solid #2a2a2a}
+.dept-name{font-weight:600;font-size:14px;color:#e8e8e8;margin-bottom:3px}
+.dept-slug{font-size:11px;color:#555;font-family:monospace}
+.card-body{padding:14px 16px}
+.mission{font-size:12px;color:#888;line-height:1.6;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.meta-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.badge{font-size:10px;padding:3px 8px;border-radius:4px;font-weight:500;border:1px solid}
+.badge.evidence{background:#1a1a1a;border-color:#2a2a2a;color:#888}
+.badge.lead{background:#1a2030;border-color:#2a3a50;color:#82d6ff}
+.keywords{display:flex;flex-wrap:wrap;gap:4px}
+.kw{font-size:10px;background:#141414;border:1px solid #222;border-radius:3px;padding:2px 6px;color:#666;font-family:monospace}
+.list-row{background:#111;border-left:3px solid var(--dept-color);border-bottom:1px solid #1a1a1a;padding:14px 20px;cursor:pointer;display:flex;align-items:center;gap:16px;transition:background .15s}
+.list-row:hover{background:#151515}
+.list-row:first-child{border-radius:8px 8px 0 0}
+.list-row:last-child{border-radius:0 0 8px 8px;border-bottom:none}
+.list-row .emoji{font-size:18px;min-width:28px;text-align:center}
+.list-row .info{flex:1;min-width:0}
+.list-row .name{font-weight:600;font-size:14px;color:#e8e8e8;margin-bottom:2px}
+.list-row .mission-short{font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-row .lead-badge{font-size:11px;color:#82d6ff;background:#1a2030;border:1px solid #2a3a50;border-radius:4px;padding:3px 8px;white-space:nowrap}
+/* Detail drawer */
+.drawer{position:fixed;right:0;top:0;bottom:0;width:420px;background:#0f0f0f;border-left:1px solid #222;overflow-y:auto;z-index:100;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);padding:0}
+.drawer.open{transform:none}
+.drawer-header{padding:20px;border-bottom:1px solid #1e1e1e;display:flex;align-items:flex-start;gap:12px;position:sticky;top:0;background:#0f0f0f;z-index:1}
+.drawer-emoji{font-size:28px;width:50px;height:50px;display:flex;align-items:center;justify-content:center;background:#141414;border-radius:10px;border:2px solid var(--dept-color)}
+.drawer-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+.drawer-slug{font-size:12px;color:#555;font-family:monospace;margin-bottom:4px}
+.color-chip{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.drawer-close{margin-left:auto;background:none;border:1px solid #2a2a2a;color:#888;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px}
+.drawer-close:hover{color:#e8e8e8;border-color:#555}
+.drawer-body{padding:20px}
+.section{margin-bottom:22px}
+.section h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#555;margin-bottom:10px;font-weight:600}
+.section p{font-size:13px;color:#ccc;line-height:1.7}
+.owns-list{list-style:none;display:flex;flex-direction:column;gap:5px}
+.owns-list li{font-size:12px;color:#aaa;padding:5px 8px;background:#141414;border-radius:4px;border-left:2px solid var(--dept-color)}
+.kw-list{display:flex;flex-wrap:wrap;gap:5px}
+.kw-chip{font-size:11px;background:#141414;border:1px solid #222;border-radius:4px;padding:3px 8px;color:#777;font-family:monospace}
+.outputs-list{display:flex;flex-wrap:wrap;gap:6px}
+.output-chip{font-size:11px;background:#1a1a2a;border:1px solid #2a2a4a;border-radius:4px;padding:4px 10px;color:#a0a0d0}
+.edit-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.edit-row label{font-size:12px;color:#666;min-width:50px}
+.edit-row input,.edit-row textarea{flex:1;background:#141414;border:1px solid #2a2a2a;color:#e8e8e8;padding:7px 10px;border-radius:5px;font-size:12px;outline:none;font-family:inherit}
+.edit-row textarea{resize:vertical;min-height:60px}
+.edit-row input:focus,.edit-row textarea:focus{border-color:#555}
+.save-btn{width:100%;padding:10px;background:#1a2030;border:1px solid var(--dept-color);color:var(--dept-color);border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:background .15s}
+.save-btn:hover{background:#253050}
+.msg{padding:8px 12px;border-radius:6px;font-size:12px;margin-top:8px;display:none}
+.msg.ok{background:#0a2a1a;border:1px solid #1a6a3a;color:#72d4a8}
+.msg.err{background:#2a0a0a;border:1px solid #6a1a1a;color:#ff9999}
+.empty{text-align:center;padding:60px 20px;color:#444;font-size:14px}
+@media(max-width:600px){.drawer{width:100%}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <a href="/index.html">Workspace</a>
+  <span>|</span>
+  <a href="/doctor.html">Doctor</a>
+  <span>|</span>
+  <a href="/meta.html">Meta Lab</a>
+  <span>|</span>
+  <a href="/challenges.html" style="color:#f4a44a">Challenges</a>
+  <span>|</span>
+  <a href="/relationships.html" style="color:#c084fc">Relationships</a>
+  <span>|</span>
+  <a href="/passport.html" style="color:#72d4a8">Passport</a>
+  <span>|</span>
+  <a href="/ledger.html" style="color:#ffcf75">Ledger</a>
+  <span>|</span>
+  <a href="/council.html" style="color:#e8a842">Council</a>
+  <span>|</span>
+  <a href="/simulation.html" style="color:#e872d4">Simulations</a>
+  <span>|</span>
+  <a href="/routing.html" style="color:#f472b6">Routing</a>
+  <span>|</span>
+  <a href="/graph.html" style="color:#a78bfa">Graph</a>
+  <span>|</span>
+  <a href="/billing.html" style="color:#34d399">Billing</a>
+  <span>|</span>
+  <a href="/builders.html" style="color:#fb923c">Builders</a>
+  <span>|</span>
+  <a href="/departments.html" style="color:#60a5fa;font-weight:bold">Departments</a>
+  <span>|</span>
+  <a href="/demo.html" style="color:#38bdf8">Demo</a>
+</div>
+
+<header>
+  <h1>🏢 Departments</h1>
+  <p>15 authoritative canon records — mandates, evidence standards, and signal ownership</p>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="label">Departments</div><div class="value" id="stat-total">—</div></div>
+  <div class="stat"><div class="label">With Lead</div><div class="value" id="stat-led">—</div></div>
+  <div class="stat"><div class="label">Output Types</div><div class="value" id="stat-outputs">—</div></div>
+  <div class="stat"><div class="label">Signal Keywords</div><div class="value" id="stat-kw">—</div></div>
+</div>
+
+<div class="controls">
+  <div class="search-wrap">
+    <input id="search" type="text" placeholder="Search departments…" oninput="applyFilters()">
+  </div>
+  <select id="evidence-filter" onchange="applyFilters()">
+    <option value="">All evidence standards</option>
+    <option value="Known">Known</option>
+    <option value="Supported">Supported</option>
+    <option value="Possible">Possible</option>
+    <option value="Any">Any level</option>
+  </select>
+  <div class="view-toggle">
+    <button id="btn-grid" class="active" onclick="setView('grid')">⊞ Grid</button>
+    <button id="btn-list" onclick="setView('list')">☰ List</button>
+  </div>
+</div>
+
+<div id="container" class="grid"></div>
+
+<!-- Detail drawer -->
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-emoji" id="d-emoji"></div>
+    <div>
+      <div class="drawer-title" id="d-name"></div>
+      <div class="drawer-slug" id="d-slug"></div>
+      <div id="d-color-row" style="font-size:12px;color:#888;margin-top:2px"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕ Close</button>
+  </div>
+  <div class="drawer-body">
+    <div class="section">
+      <h3>Mission</h3>
+      <p id="d-mission"></p>
+    </div>
+    <div class="section">
+      <h3>Owns</h3>
+      <ul class="owns-list" id="d-owns"></ul>
+    </div>
+    <div class="section">
+      <h3>Evidence Standard</h3>
+      <p id="d-evidence" style="font-size:13px;color:#aaa"></p>
+    </div>
+    <div class="section">
+      <h3>Output Types</h3>
+      <div class="outputs-list" id="d-outputs"></div>
+    </div>
+    <div class="section">
+      <h3>Review Cadence</h3>
+      <p id="d-cadence" style="font-size:13px;color:#aaa"></p>
+    </div>
+    <div class="section">
+      <h3>Signal Keywords</h3>
+      <div class="kw-list" id="d-keywords"></div>
+    </div>
+    <div class="section">
+      <h3>Lead &amp; Members</h3>
+      <div class="edit-row">
+        <label>Lead</label>
+        <input id="d-lead-input" type="text" placeholder="Name of current lead">
+      </div>
+      <div class="edit-row">
+        <label>Notes</label>
+        <textarea id="d-notes-input" placeholder="Internal notes…"></textarea>
+      </div>
+      <button class="save-btn" id="d-save-btn" onclick="saveDept()">Save Changes</button>
+      <div class="msg" id="d-msg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let ALL = [];
+let VIEW = 'grid';
+let SELECTED = null;
+
+async function load() {
+  try {
+    const r = await fetch('/api/departments');
+    if (!r.ok) throw new Error(r.statusText);
+    const j = await r.json();
+    ALL = j.departments || [];
+    computeStats();
+    applyFilters();
+  } catch(e) {
+    document.getElementById('container').innerHTML = `<div class="empty">⚠ Could not load departments<br><small style="color:#333">${e.message}</small><br><small style="color:#444;margin-top:8px;display:block">Ensure evolve_server.py is running with department endpoints (patch_departments.py)</small></div>`;
+  }
+}
+
+function computeStats() {
+  document.getElementById('stat-total').textContent = ALL.length;
+  document.getElementById('stat-led').textContent = ALL.filter(d=>d.lead).length;
+  const outs = new Set(ALL.flatMap(d=>d.output_types||[]));
+  document.getElementById('stat-outputs').textContent = outs.size;
+  const kws = new Set(ALL.flatMap(d=>d.keywords||[]));
+  document.getElementById('stat-kw').textContent = kws.size;
+}
+
+function applyFilters() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const ev = document.getElementById('evidence-filter').value.toLowerCase();
+  let data = ALL;
+  if (q) {
+    data = data.filter(d =>
+      d.name.toLowerCase().includes(q) ||
+      (d.mission||'').toLowerCase().includes(q) ||
+      (d.keywords||[]).some(k=>k.toLowerCase().includes(q)) ||
+      (d.owns||[]).some(o=>o.toLowerCase().includes(q))
+    );
+  }
+  if (ev) {
+    data = data.filter(d => (d.evidence_standard||'').toLowerCase().includes(ev));
+  }
+  render(data);
+}
+
+function setView(v) {
+  VIEW = v;
+  document.getElementById('btn-grid').classList.toggle('active', v==='grid');
+  document.getElementById('btn-list').classList.toggle('active', v==='list');
+  applyFilters();
+}
+
+function render(data) {
+  const c = document.getElementById('container');
+  c.className = VIEW === 'list' ? 'list-view' : 'grid';
+  if (!data.length) { c.innerHTML = '<div class="empty">No departments match your filter.</div>'; return; }
+
+  if (VIEW === 'grid') {
+    c.innerHTML = data.map(d => `
+      <div class="dept-card ${SELECTED===d.slug?'selected':''}" style="--dept-color:${d.color||'#555'}" onclick="openDrawer('${d.slug}')">
+        <div class="card-header">
+          <div class="dept-emoji">${d.emoji||'🏢'}</div>
+          <div>
+            <div class="dept-name">${d.name}</div>
+            <div class="dept-slug">${d.slug}</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="mission">${d.mission||'No mission defined.'}</div>
+          <div class="meta-row">
+            <span class="badge lead">👤 ${d.lead_role||'—'}</span>
+            <span class="badge evidence">${shortEvidence(d.evidence_standard)}</span>
+          </div>
+          <div class="keywords">
+            ${(d.keywords||[]).slice(0,6).map(k=>`<span class="kw">${k}</span>`).join('')}
+            ${(d.keywords||[]).length>6?`<span class="kw">+${(d.keywords||[]).length-6}</span>`:''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    c.innerHTML = data.map(d => `
+      <div class="list-row" style="--dept-color:${d.color||'#555'}" onclick="openDrawer('${d.slug}')">
+        <div class="emoji">${d.emoji||'🏢'}</div>
+        <div class="info">
+          <div class="name">${d.name}</div>
+          <div class="mission-short">${d.mission||''}</div>
+        </div>
+        <div class="lead-badge">👤 ${d.lead_role||'—'}</div>
+      </div>
+    `).join('');
+  }
+}
+
+function shortEvidence(ev) {
+  if (!ev) return '—';
+  const m = ev.match(/^([A-Za-z ]+(?:or [A-Za-z]+)?)/);
+  return m ? m[1].trim() : ev.substring(0,30);
+}
+
+function openDrawer(slug) {
+  const d = ALL.find(x=>x.slug===slug);
+  if (!d) return;
+  SELECTED = slug;
+  applyFilters();
+
+  const color = d.color || '#555';
+  document.getElementById('drawer').style.setProperty('--dept-color', color);
+  document.getElementById('d-emoji').textContent = d.emoji||'🏢';
+  document.getElementById('d-name').textContent = d.name;
+  document.getElementById('d-slug').textContent = d.slug;
+  document.getElementById('d-color-row').innerHTML = `<span class="color-chip" style="background:${color}"></span>${color}`;
+  document.getElementById('d-mission').textContent = d.mission||'No mission defined.';
+
+  const ownsList = document.getElementById('d-owns');
+  ownsList.innerHTML = (d.owns||[]).map(o=>`<li>${o}</li>`).join('');
+
+  document.getElementById('d-evidence').textContent = d.evidence_standard||'—';
+  document.getElementById('d-cadence').textContent = d.review_cadence||'—';
+
+  document.getElementById('d-outputs').innerHTML = (d.output_types||[]).map(o=>`<span class="output-chip">${o}</span>`).join('');
+  document.getElementById('d-keywords').innerHTML = (d.keywords||[]).map(k=>`<span class="kw-chip">${k}</span>`).join('');
+
+  document.getElementById('d-lead-input').value = d.lead||'';
+  document.getElementById('d-notes-input').value = d.notes||'';
+  document.getElementById('d-save-btn').dataset.slug = slug;
+
+  const msg = document.getElementById('d-msg');
+  msg.style.display='none';
+
+  document.getElementById('drawer').classList.add('open');
+}
+
+function closeDrawer() {
+  SELECTED = null;
+  document.getElementById('drawer').classList.remove('open');
+  applyFilters();
+}
+
+async function saveDept() {
+  const slug = document.getElementById('d-save-btn').dataset.slug;
+  const lead = document.getElementById('d-lead-input').value.trim();
+  const notes = document.getElementById('d-notes-input').value.trim();
+  const msg = document.getElementById('d-msg');
+  msg.style.display='none';
+  try {
+    const r = await fetch(`/api/departments/${slug}/update`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({lead, notes})
+    });
+    const j = await r.json();
+    if (j.ok) {
+      const idx = ALL.findIndex(x=>x.slug===slug);
+      if (idx>-1) { ALL[idx].lead=lead; ALL[idx].notes=notes; }
+      msg.textContent='✓ Saved'; msg.className='msg ok'; msg.style.display='block';
+      setTimeout(()=>msg.style.display='none', 3000);
+      computeStats();
+    } else {
+      throw new Error(j.error||'Unknown error');
+    }
+  } catch(e) {
+    msg.textContent='✗ '+e.message; msg.className='msg err'; msg.style.display='block';
+  }
+}
+
+document.addEventListener('keydown', e=>{if(e.key==='Escape')closeDrawer();});
+load();
+</script>
+</body>
+</html>

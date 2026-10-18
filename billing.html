@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Billing — Henceforth Discover</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#061018;color:#c8d8e8;font-family:'Segoe UI',sans-serif;min-height:100vh}
+a{color:#82d6ff;text-decoration:none}
+nav{background:#0b1b2a;border-bottom:1px solid #1f435c;padding:8px 14px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:12px}
+nav span{color:#1f435c}
+.page{max-width:900px;margin:0 auto;padding:24px 16px}
+h1{font-size:20px;color:#82d6ff;margin-bottom:4px}
+.subtitle{font-size:12px;color:#5a8ab0;margin-bottom:24px}
+.panel{background:#0b1b2a;border:1px solid #1f435c;border-radius:8px;padding:20px;margin-bottom:18px}
+.panel h2{font-size:14px;color:#82d6ff;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.stat-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.stat{background:#061018;border:1px solid #1f435c;border-radius:6px;padding:14px 18px;flex:1;min-width:140px}
+.stat-val{font-size:22px;font-weight:700;color:#82d6ff}
+.stat-label{font-size:11px;color:#5a8ab0;margin-top:2px}
+.plan-card{border:1px solid #1f435c;border-radius:8px;padding:18px;flex:1;min-width:200px;position:relative}
+.plan-card.active{border-color:#72d4a8;background:#061018}
+.plan-name{font-size:16px;font-weight:700;color:#c8d8e8;margin-bottom:4px}
+.plan-price{font-size:24px;font-weight:700;color:#82d6ff}
+.plan-price span{font-size:12px;color:#5a8ab0;font-weight:400}
+.plan-features{margin-top:12px;font-size:12px;color:#5a8ab0;line-height:2}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase}
+.badge-active{background:#0a3020;color:#72d4a8;border:1px solid #72d4a8}
+.badge-trial{background:#1a2a00;color:#c8e840;border:1px solid #c8e840}
+.badge-past_due{background:#3a1010;color:#ff8080;border:1px solid #ff6060}
+.badge-canceled{background:#1a1010;color:#886666;border:1px solid #554444}
+.badge-none{background:#0a1520;color:#5a8ab0;border:1px solid #1f435c}
+button{background:#1f435c;border:1px solid #2a5a7c;color:#c8d8e8;padding:8px 18px;border-radius:5px;cursor:pointer;font-size:13px;transition:background .15s}
+button:hover{background:#2a5a7c}
+button.primary{background:#0d5080;border-color:#1a7ab8;color:#fff}
+button.primary:hover{background:#1a7ab8}
+button.danger{background:#5a1010;border-color:#8a2020;color:#ffaaaa}
+button.danger:hover{background:#8a2020}
+.plans-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+.check{color:#72d4a8;margin-right:6px}
+.invoice-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #0f2535;gap:12px;font-size:13px}
+.invoice-row:last-child{border-bottom:none}
+.inv-date{color:#5a8ab0;min-width:100px;font-size:12px}
+.inv-desc{flex:1}
+.inv-amt{font-weight:700;min-width:70px;text-align:right}
+.inv-status{min-width:60px;text-align:right}
+.empty{color:#3a6080;font-size:13px;padding:20px 0;text-align:center}
+.loading{color:#3a6080;font-size:13px;text-align:center;padding:20px}
+input,select{background:#061018;border:1px solid #1f435c;color:#c8d8e8;padding:6px 10px;border-radius:4px;font-size:13px;width:100%}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;color:#5a8ab0;margin-bottom:4px}
+.notice{background:#0a2030;border:1px solid #1f435c;border-radius:6px;padding:12px 16px;font-size:12px;color:#82d6ff;margin-bottom:16px}
+.notice.warn{background:#2a1800;border-color:#8a4800;color:#e8a842}
+.notice.err{background:#2a0a0a;border-color:#8a1a1a;color:#ff8080}
+.current-plan{position:absolute;top:10px;right:12px}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">Workspace</a><span>|</span>
+  <a href="/doctor.html">Doctor</a><span>|</span>
+  <a href="/meta.html">Meta Lab</a><span>|</span>
+  <a href="/challenges.html" style="color:#f4a44a">Challenges</a><span>|</span>
+  <a href="/relationships.html" style="color:#c084fc">Relationships</a><span>|</span>
+  <a href="/passport.html" style="color:#72d4a8">Passport</a><span>|</span>
+  <a href="/ledger.html" style="color:#ffcf75">Ledger</a><span>|</span>
+  <a href="/council.html" style="color:#e8a842">Council</a><span>|</span>
+  <a href="/simulation.html" style="color:#e872d4">Simulations</a><span>|</span>
+  <a href="/routing.html" style="color:#f472b6">Routing</a><span>|</span>
+  <a href="/graph.html" style="color:#a78bfa">Graph</a><span>|</span>
+  <a href="/billing.html" style="color:#34d399;font-weight:700">Billing</a>
+  <span>|</span>
+  <a href="/builders.html" style="color:#fb923c">Builders</a>
+  <span>|</span>
+  <a href="/departments.html" style="color:#60a5fa">Departments</a>
+  <span>|</span>
+  <a href="/demo.html" style="color:#38bdf8">Demo</a>
+</nav>
+
+<div class="page">
+  <h1>💳 Billing &amp; Subscription</h1>
+  <p class="subtitle">Manage your Henceforth Discover plan and payment details.</p>
+
+  <!-- Status notice -->
+  <div id="statusNotice" class="loading">Loading subscription status…</div>
+
+  <!-- Stat row -->
+  <div class="stat-row" id="statRow" style="display:none">
+    <div class="stat">
+      <div class="stat-val" id="statPlan">—</div>
+      <div class="stat-label">Current Plan</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="statStatus">—</div>
+      <div class="stat-label">Status</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="statRenewal">—</div>
+      <div class="stat-label">Next Renewal</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="statInvoices">—</div>
+      <div class="stat-label">Invoices</div>
+    </div>
+  </div>
+
+  <!-- Plans -->
+  <div class="panel">
+    <h2>📦 Available Plans</h2>
+    <div class="plans-row" id="plansRow">
+      <div class="plan-card" id="planFree">
+        <div class="plan-name">Explorer</div>
+        <div class="plan-price">$0<span>/mo</span></div>
+        <div class="plan-features">
+          <div><span class="check">✓</span>Atlas up to 25 objects</div>
+          <div><span class="check">✓</span>5 Grand Challenges</div>
+          <div><span class="check">✓</span>Basic ledger</div>
+          <div><span class="check">✓</span>Community support</div>
+        </div>
+        <div style="margin-top:14px">
+          <button id="btnFree" onclick="selectPlan('free')">Current Plan</button>
+        </div>
+      </div>
+      <div class="plan-card" id="planPro">
+        <div class="plan-name">Builder Pro</div>
+        <div class="plan-price" id="priceProLabel">$29<span>/mo</span></div>
+        <div class="plan-features">
+          <div><span class="check">✓</span>Unlimited Atlas objects</div>
+          <div><span class="check">✓</span>Unlimited Challenges</div>
+          <div><span class="check">✓</span>Simulation Gate + Council</div>
+          <div><span class="check">✓</span>OriginStamp proofs</div>
+          <div><span class="check">✓</span>Cross-department routing</div>
+          <div><span class="check">✓</span>Knowledge graph</div>
+          <div><span class="check">✓</span>Priority support</div>
+        </div>
+        <div style="margin-top:14px">
+          <button class="primary" id="btnPro" onclick="selectPlan('pro')">Upgrade to Builder Pro</button>
+        </div>
+      </div>
+      <div class="plan-card" id="planTeam">
+        <div class="plan-name">Team</div>
+        <div class="plan-price" id="priceTeamLabel">$79<span>/mo</span></div>
+        <div class="plan-features">
+          <div><span class="check">✓</span>Everything in Builder Pro</div>
+          <div><span class="check">✓</span>Up to 5 builders</div>
+          <div><span class="check">✓</span>Multi-builder sessions</div>
+          <div><span class="check">✓</span>Shared Atlas workspace</div>
+          <div><span class="check">✓</span>Admin controls</div>
+          <div><span class="check">✓</span>Dedicated support</div>
+        </div>
+        <div style="margin-top:14px">
+          <button class="primary" id="btnTeam" onclick="selectPlan('team')">Upgrade to Team</button>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:#3a6080;margin-top:6px">All plans billed monthly. Cancel anytime. Prices in USD.</div>
+  </div>
+
+  <!-- Active subscription panel (shown when subscribed) -->
+  <div class="panel" id="subPanel" style="display:none">
+    <h2>🔑 Subscription Details</h2>
+    <div id="subDetails"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+      <button class="primary" onclick="openPortal()">Manage Payment Method</button>
+      <button onclick="openPortal()">Update Billing Info</button>
+      <button class="danger" onclick="openPortal()">Cancel Subscription</button>
+    </div>
+  </div>
+
+  <!-- Invoice history -->
+  <div class="panel">
+    <h2>🧾 Invoice History</h2>
+    <div id="invoiceList"><div class="loading">Loading invoices…</div></div>
+  </div>
+
+  <!-- Webhook log (dev tool) -->
+  <div class="panel" id="webhookPanel">
+    <h2>🔔 Recent Webhook Events <span style="font-size:11px;color:#3a6080;font-weight:400">(last 20)</span></h2>
+    <div id="webhookList"><div class="loading">Loading…</div></div>
+  </div>
+
+  <!-- Config (only shows if not configured) -->
+  <div class="panel" id="configPanel" style="display:none">
+    <h2>⚙️ Stripe Configuration</h2>
+    <div class="notice warn">Stripe is not yet configured. Set the environment variables below on your Render service, then redeploy.</div>
+    <div style="background:#061018;border:1px solid #1f435c;border-radius:5px;padding:14px;font-size:12px;font-family:monospace;color:#82d6ff;line-height:2">
+      STRIPE_SECRET_KEY=sk_live_…<br>
+      STRIPE_WEBHOOK_SECRET=whsec_…<br>
+      STRIPE_PRICE_PRO=price_…<br>
+      STRIPE_PRICE_TEAM=price_…<br>
+      STRIPE_SUCCESS_URL=https://your-app.onrender.com/billing.html?success=1<br>
+      STRIPE_CANCEL_URL=https://your-app.onrender.com/billing.html
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:#5a8ab0">
+      1. Create products in the <a href="https://dashboard.stripe.com/products" target="_blank">Stripe Dashboard</a><br>
+      2. Copy each price ID to the env vars above<br>
+      3. Set up a webhook endpoint pointing to <code style="color:#82d6ff">https://your-app.onrender.com/api/stripe/webhook</code><br>
+      4. Subscribe to: <code style="color:#82d6ff">checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.paid, invoice.payment_failed</code>
+    </div>
+  </div>
+</div>
+
+<script>
+let sub=null, stripeConfigured=false;
+
+async function init(){
+  // Check for success/cancel redirect
+  const params=new URLSearchParams(location.search);
+  if(params.get('success')){
+    document.getElementById('statusNotice').className='notice';
+    document.getElementById('statusNotice').textContent='✓ Payment successful! Your subscription is now active.';
+    history.replaceState({},'',location.pathname);
+  } else if(params.get('canceled')){
+    document.getElementById('statusNotice').className='notice warn';
+    document.getElementById('statusNotice').textContent='Checkout was canceled. No charge was made.';
+    history.replaceState({},'',location.pathname);
+  }
+
+  await Promise.all([loadStatus(), loadInvoices(), loadWebhooks()]);
+}
+
+async function loadStatus(){
+  try{
+    const r=await fetch('/api/stripe/status');
+    const d=await r.json();
+    if(d.error==='stripe_not_configured'){
+      document.getElementById('configPanel').style.display='';
+      document.getElementById('statusNotice').style.display='none';
+      document.getElementById('statRow').style.display='none';
+      return;
+    }
+    stripeConfigured=true;
+    document.getElementById('configPanel').style.display='none';
+    if(!document.getElementById('statusNotice').textContent.includes('✓')&&!document.getElementById('statusNotice').textContent.includes('canceled')){
+      document.getElementById('statusNotice').style.display='none';
+    }
+    sub=d.subscription;
+    renderStatus(d);
+  } catch(e){
+    document.getElementById('statusNotice').className='notice err';
+    document.getElementById('statusNotice').textContent='Could not load billing status. Is the server running?';
+  }
+}
+
+function renderStatus(d){
+  document.getElementById('statRow').style.display='flex';
+  const status=d.subscription?.status||'none';
+  const plan=d.subscription?.plan||'Explorer';
+  const renewal=d.subscription?.current_period_end ? fmtDate(d.subscription.current_period_end) : '—';
+  const invoiceCount=d.invoice_count||0;
+
+  document.getElementById('statPlan').textContent=plan;
+  document.getElementById('statStatus').innerHTML=`<span class="badge badge-${status}">${status}</span>`;
+  document.getElementById('statRenewal').textContent=renewal;
+  document.getElementById('statInvoices').textContent=invoiceCount;
+
+  // Update plan buttons
+  const planKey=d.subscription?.plan_key||'free';
+  ['free','pro','team'].forEach(p=>{
+    const btn=document.getElementById('btn'+p.charAt(0).toUpperCase()+p.slice(1));
+    if(p===planKey){
+      btn.textContent= p==='free'?'Current Plan':'✓ Active';
+      btn.disabled=true;
+      document.getElementById('plan'+p.charAt(0).toUpperCase()+p.slice(1)).classList.add('active');
+      document.getElementById('plan'+p.charAt(0).toUpperCase()+p.slice(1)).innerHTML+=
+        '<div class="current-plan"><span class="badge badge-active">Current</span></div>';
+    }
+  });
+
+  // Show sub panel if subscribed
+  if(sub&&sub.status!=='none'&&sub.status){
+    document.getElementById('subPanel').style.display='';
+    document.getElementById('subDetails').innerHTML=`
+      <div style="display:flex;flex-wrap:wrap;gap:18px;font-size:13px">
+        <div><div style="color:#5a8ab0;font-size:11px;margin-bottom:3px">Plan</div>${sub.plan||'—'}</div>
+        <div><div style="color:#5a8ab0;font-size:11px;margin-bottom:3px">Status</div><span class="badge badge-${sub.status}">${sub.status}</span></div>
+        <div><div style="color:#5a8ab0;font-size:11px;margin-bottom:3px">Billing period</div>${sub.current_period_start?fmtDate(sub.current_period_start):' —'} → ${sub.current_period_end?fmtDate(sub.current_period_end):'—'}</div>
+        <div><div style="color:#5a8ab0;font-size:11px;margin-bottom:3px">Customer ID</div><code style="font-size:11px;color:#82d6ff">${sub.customer_id||'—'}</code></div>
+        <div><div style="color:#5a8ab0;font-size:11px;margin-bottom:3px">Subscription ID</div><code style="font-size:11px;color:#82d6ff">${sub.subscription_id||'—'}</code></div>
+      </div>
+    `;
+  }
+}
+
+async function loadInvoices(){
+  try{
+    const r=await fetch('/api/stripe/invoices');
+    const d=await r.json();
+    const el=document.getElementById('invoiceList');
+    if(d.error==='stripe_not_configured'){el.innerHTML='<div class="empty">Stripe not yet configured.</div>';return;}
+    const inv=d.invoices||[];
+    if(!inv.length){el.innerHTML='<div class="empty">No invoices yet.</div>';return;}
+    el.innerHTML=inv.map(i=>`
+      <div class="invoice-row">
+        <div class="inv-date">${fmtDate(i.created)}</div>
+        <div class="inv-desc">${esc(i.description||i.lines||'Subscription')}</div>
+        <div class="inv-amt">$${(i.amount_paid/100).toFixed(2)}</div>
+        <div class="inv-status"><span class="badge badge-${i.status==='paid'?'active':'past_due'}">${i.status}</span></div>
+        ${i.hosted_invoice_url?`<div><a href="${i.hosted_invoice_url}" target="_blank" style="font-size:11px">View ↗</a></div>`:''}
+      </div>`).join('');
+  } catch(e){
+    document.getElementById('invoiceList').innerHTML='<div class="empty">Could not load invoices.</div>';
+  }
+}
+
+async function loadWebhooks(){
+  try{
+    const r=await fetch('/api/stripe/webhooks');
+    const d=await r.json();
+    const el=document.getElementById('webhookList');
+    if(d.error==='stripe_not_configured'){el.innerHTML='<div class="empty">Stripe not yet configured.</div>';return;}
+    const events=d.events||[];
+    if(!events.length){el.innerHTML='<div class="empty">No webhook events received yet.</div>';return;}
+    el.innerHTML=events.map(e=>`
+      <div class="invoice-row">
+        <div class="inv-date">${fmtDate(e.received_at)}</div>
+        <div class="inv-desc" style="font-family:monospace;font-size:12px">${esc(e.type)}</div>
+        <div style="font-size:11px;color:#5a8ab0">${esc(e.id||'')}</div>
+        <div class="inv-status"><span class="badge badge-${e.handled?'active':'none'}">${e.handled?'handled':'logged'}</span></div>
+      </div>`).join('');
+  } catch(e){
+    document.getElementById('webhookList').innerHTML='<div class="empty">Could not load webhook log.</div>';
+  }
+}
+
+async function selectPlan(planKey){
+  if(!stripeConfigured){
+    alert('Stripe is not yet configured. See the configuration panel below.');
+    return;
+  }
+  if(planKey==='free'){
+    alert('You are on the free Explorer plan. Upgrade to Builder Pro or Team for full access.');
+    return;
+  }
+  const btn=document.getElementById('btn'+planKey.charAt(0).toUpperCase()+planKey.slice(1));
+  btn.disabled=true; btn.textContent='Redirecting…';
+  try{
+    const r=await fetch('/api/stripe/checkout',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({plan:planKey})
+    });
+    const d=await r.json();
+    if(d.url) window.location.href=d.url;
+    else { btn.disabled=false; btn.textContent='Try again'; alert(d.error||'Checkout failed'); }
+  } catch(e){
+    btn.disabled=false; btn.textContent='Try again';
+    alert('Network error. Is the server running?');
+  }
+}
+
+async function openPortal(){
+  if(!stripeConfigured){ alert('Stripe not configured.'); return; }
+  try{
+    const r=await fetch('/api/stripe/portal',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const d=await r.json();
+    if(d.url) window.location.href=d.url;
+    else alert(d.error||'Could not open billing portal');
+  } catch(e){ alert('Network error.'); }
+}
+
+function fmtDate(ts){
+  if(!ts) return '—';
+  const d=typeof ts==='number'?new Date(ts*1000):new Date(ts);
+  return d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+init();
+</script>
+</body>
+</html>

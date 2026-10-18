@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Department Routing — Henceforth Discover</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#061018;color:#c8d8e8;font-family:'Segoe UI',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+a{color:#82d6ff;text-decoration:none}
+nav{background:#0b1b2a;border-bottom:1px solid #1f435c;padding:10px 18px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px}
+nav span{color:#1f435c}
+h2{color:#82d6ff;font-size:15px;font-weight:600}
+h3{color:#c8d8e8;font-size:13px;font-weight:600;margin-bottom:8px}
+.layout{display:flex;flex:1;height:calc(100vh - 42px)}
+.sidebar{width:270px;min-width:200px;background:#0b1b2a;border-right:1px solid #1f435c;display:flex;flex-direction:column;overflow:hidden}
+.sidebar-hd{padding:12px 14px;border-bottom:1px solid #1f435c}
+.sidebar-body{flex:1;overflow-y:auto}
+.main{flex:1;overflow-y:auto;padding:18px}
+button{background:#1f435c;border:1px solid #2a5a7c;color:#c8d8e8;padding:5px 12px;border-radius:4px;cursor:pointer;font-size:12px}
+button:hover{background:#2a5a7c}
+button.primary{background:#0d5080;border-color:#1a7ab8;color:#fff}
+button.primary:hover{background:#1a7ab8}
+input,textarea,select{background:#061018;border:1px solid #1f435c;color:#c8d8e8;padding:6px 9px;border-radius:4px;font-size:13px;font-family:inherit;width:100%}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#82d6ff}
+.panel{background:#0b1b2a;border:1px solid #1f435c;border-radius:6px;padding:14px;margin-bottom:14px}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
+.ev-Known{background:#0a2a1a;color:#72d4a8}
+.ev-Supported{background:#0a1a3a;color:#82d6ff}
+.ev-Possible{background:#1a1a0a;color:#e8d472}
+.ev-Speculative{background:#2a1a0a;color:#e8a842}
+.ev-Rejected{background:#3a0a0a;color:#ff9999}
+.dept-chip{display:inline-flex;align-items:center;gap:5px;background:#061018;border:1px solid #1f435c;border-radius:4px;padding:3px 9px;font-size:11px;margin:2px;cursor:pointer;transition:border-color .15s}
+.dept-chip:hover{border-color:#82d6ff}
+.dept-chip.active{border-color:#82d6ff;background:#0a2030}
+.dept-bar-wrap{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.dept-bar-label{font-size:12px;color:#a0c0d8;min-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dept-bar-bg{flex:1;height:8px;background:#1f435c;border-radius:4px}
+.dept-bar-fill{height:100%;border-radius:4px;background:#82d6ff;transition:width .4s}
+.dept-count{font-size:11px;color:#5a8ab0;min-width:28px;text-align:right}
+.record-row{padding:10px 14px;border-bottom:1px solid #0d2235;cursor:pointer}
+.record-row:hover{background:#102030}
+.record-row.active{background:#132c40;border-left:3px solid #82d6ff}
+.record-row .rt{font-size:13px;font-weight:600;color:#c8d8e8;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.record-row .rm{font-size:11px;color:#5a8ab0;display:flex;gap:6px;align-items:center}
+.route-card{background:#061018;border:1px solid #1f435c;border-radius:5px;padding:10px 12px;margin-bottom:8px}
+.route-dept{font-size:12px;font-weight:700;color:#82d6ff;margin-bottom:4px}
+.route-reason{font-size:12px;color:#a0c0d8;margin-bottom:4px;line-height:1.4}
+.signal-tag{display:inline-block;background:#0a2030;border:1px solid #1a3d5c;border-radius:3px;padding:1px 6px;font-size:10px;margin:1px;color:#82d6ff}
+.stat-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.stat-box{background:#0b1b2a;border:1px solid #1f435c;border-radius:5px;padding:8px 16px;text-align:center}
+.stat-n{font-size:22px;font-weight:700;color:#82d6ff;display:block}
+.stat-l{font-size:11px;color:#5a8ab0}
+.pager{display:flex;gap:6px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.pager button{padding:4px 10px}
+.tab{display:inline-block;padding:5px 14px;cursor:pointer;font-size:12px;color:#5a8ab0;border-radius:4px 4px 0 0}
+.tab.active{background:#1f435c;color:#c8d8e8}
+.tabs{display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid #1f435c;padding-bottom:8px}
+.empty{color:#5a8ab0;font-size:13px;padding:20px;text-align:center}
+.detail-panel{padding:14px;background:#0b1b2a;border:1px solid #1f435c;border-radius:6px;margin-bottom:14px}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">Workspace</a><span>|</span>
+  <a href="/doctor.html">Doctor</a><span>|</span>
+  <a href="/meta.html">Meta Lab</a><span>|</span>
+  <a href="/challenges.html" style="color:#f4a44a">Challenges</a><span>|</span>
+  <a href="/relationships.html" style="color:#c084fc">Relationships</a><span>|</span>
+  <a href="/passport.html" style="color:#72d4a8">Passport</a><span>|</span>
+  <a href="/ledger.html" style="color:#ffcf75">Ledger</a><span>|</span>
+  <a href="/council.html" style="color:#e8a842">Council</a><span>|</span>
+  <a href="/simulation.html" style="color:#e872d4">Simulations</a><span>|</span>
+  <a href="/routing.html" style="color:#f472b6;font-weight:700">Routing</a><span>|</span>
+  <a href="/graph.html" style="color:#a78bfa">Graph</a><span>|</span>
+  <a href="/billing.html" style="color:#34d399">Billing</a><span>|</span>
+  <a href="/builders.html" style="color:#fb923c">Builders</a>
+  <span>|</span>
+  <a href="/departments.html" style="color:#60a5fa">Departments</a>
+  <span>|</span>
+  <a href="/demo.html" style="color:#38bdf8">Demo</a>
+</nav>
+
+<div class="layout">
+  <!-- Sidebar: department frequency -->
+  <div class="sidebar">
+    <div class="sidebar-hd">
+      <h2>🏛 Departments</h2>
+      <div style="margin-top:6px">
+        <input id="deptSearch" placeholder="Filter dept…" style="font-size:11px;padding:4px 7px" oninput="filterDepts()">
+      </div>
+    </div>
+    <div class="sidebar-body" id="deptList"></div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Stats -->
+    <div class="stat-row">
+      <div class="stat-box"><span class="stat-n" id="sTotalRec">—</span><span class="stat-l">Records</span></div>
+      <div class="stat-box"><span class="stat-n" id="sTotalDept">—</span><span class="stat-l">Depts Active</span></div>
+      <div class="stat-box"><span class="stat-n" id="sTopDept" style="font-size:13px;line-height:1.4;padding-top:4px">—</span><span class="stat-l">Top Dept</span></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'tab-history')">Routing History</div>
+      <div class="tab" onclick="switchTab(this,'tab-route')">Route Now</div>
+    </div>
+
+    <!-- History tab -->
+    <div id="tab-history">
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <input id="qSearch" placeholder="Search records…" style="flex:1;min-width:160px" oninput="debounceLoad()">
+        <select id="qEv" onchange="loadRecords(1)" style="width:130px">
+          <option value="">All evidence</option>
+          <option>Known</option><option>Supported</option><option>Possible</option>
+          <option>Speculative</option><option>Rejected</option>
+        </select>
+        <select id="qSize" onchange="loadRecords(1)" style="width:80px">
+          <option value="25">25</option><option value="50" selected>50</option><option value="100">100</option>
+        </select>
+        <button onclick="loadRecords(1)">Refresh</button>
+      </div>
+      <div id="recordList"></div>
+      <div class="pager" id="pager"></div>
+    </div>
+
+    <!-- Route now tab -->
+    <div id="tab-route" style="display:none">
+      <div class="panel">
+        <h3>Route Text to Departments</h3>
+        <p style="font-size:12px;color:#5a8ab0;margin-bottom:12px">Paste any text and the routing engine will identify which departments should review it, based on keyword signals. No Atlas object is created.</p>
+        <textarea id="routeText" rows="4" placeholder="Paste discovery text, idea, or question…" style="margin-bottom:8px"></textarea>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <input id="routeTags" placeholder="Tags (comma-sep)" style="flex:1">
+          <select id="routeEv" style="width:130px">
+            <option>Known</option><option>Supported</option><option selected>Possible</option>
+            <option>Speculative</option><option>Rejected</option>
+          </select>
+          <button class="primary" onclick="routeNow()">▶ Route</button>
+        </div>
+        <div id="routeResult"></div>
+      </div>
+
+      <!-- Dept signal map -->
+      <div class="panel">
+        <h3>Signal Map — All 15 Departments</h3>
+        <p style="font-size:12px;color:#5a8ab0;margin-bottom:10px">Keywords that trigger each department route.</p>
+        <div id="signalMap"></div>
+      </div>
+    </div>
+
+    <!-- Record detail drawer -->
+    <div id="recordDetail" style="display:none" class="detail-panel"></div>
+  </div>
+</div>
+
+<script>
+const SIGNAL_MAP={
+  'DOS_Core':['dos','discovery operating system','local-first','backend brain'],
+  'Project_Desk':['project desk','builder interface','desk','idea forge'],
+  'Atlas':['atlas','knowledge graph','memory','object','provenance'],
+  'Builder_Passport':['passport','builder identity','license','chronicle'],
+  'Meta_Lab':['meta lab','workflow','self-improving','improvement'],
+  'Physics':['physics','light','lens','optics','field','quantum','thermal','gravity'],
+  'Engineering':['engineering','prototype','mechanism','camera','manufacturing','tolerance'],
+  'Advanced_Materials_Matter_Engineering':['material','alloy','fiber','ceramic','composite','glass'],
+  'Mathematics':['equation','math','model','optimization','geometry'],
+  'Software_Computational_Discovery':['software','code','data','ai','algorithm','api'],
+  'Energy':['power','battery','heat','energy'],
+  'Civilab':['city','water','housing','infrastructure'],
+  'Acoustics_Harmonics':['sound','harmonic','resonance','acoustic'],
+  'Biological_Systems_AI_Farm':['plant','soil','fungi','biology','farm'],
+  'Philosophy_Reasoning':['philosophy','claim','framing','reasoning','ethics']
+};
+
+let allDeptCounts={}, activeDept='', currentPage=1, totalPages=1, debounceTimer=null, currentRecord=null;
+
+async function init(){
+  renderSignalMap();
+  await loadRecords(1);
+}
+
+function debounceLoad(){
+  clearTimeout(debounceTimer);
+  debounceTimer=setTimeout(()=>loadRecords(1),350);
+}
+
+async function loadRecords(page){
+  currentPage=page;
+  const q=document.getElementById('qSearch').value.trim();
+  const ev=document.getElementById('qEv').value;
+  const size=document.getElementById('qSize').value;
+  let url=`/api/crosstalk?page=${page}&size=${size}`;
+  if(activeDept) url+=`&dept=${encodeURIComponent(activeDept)}`;
+  if(q) url+=`&q=${encodeURIComponent(q)}`;
+  const r=await fetch(url);
+  const d=await r.json();
+  totalPages=d.pages||1;
+  allDeptCounts=d.department_counts||{};
+  renderDeptList();
+  renderRecords(d.records||[], d.total||0);
+  renderPager(d.page, d.pages, d.total);
+  // Stats
+  document.getElementById('sTotalRec').textContent=d.total||0;
+  const depts=Object.keys(allDeptCounts);
+  document.getElementById('sTotalDept').textContent=depts.length;
+  const top=depts.sort((a,b)=>allDeptCounts[b]-allDeptCounts[a])[0]||'—';
+  document.getElementById('sTopDept').textContent=top.replace(/_/g,' ');
+}
+
+function renderDeptList(){
+  const srch=document.getElementById('deptSearch').value.toLowerCase();
+  const sorted=Object.entries(allDeptCounts).sort((a,b)=>b[1]-a[1]).filter(([d])=>!srch||d.toLowerCase().includes(srch));
+  const max=sorted[0]?sorted[0][1]:1;
+  document.getElementById('deptList').innerHTML=sorted.map(([dept,cnt])=>`
+    <div class="dept-bar-wrap" style="padding:8px 12px;cursor:pointer;background:${activeDept===dept?'#132c40':'transparent'}" onclick="filterByDept('${esc(dept)}')">
+      <div class="dept-bar-label" title="${esc(dept)}">${esc(dept.replace(/_/g,' '))}</div>
+      <div class="dept-bar-bg"><div class="dept-bar-fill" style="width:${Math.round(cnt/max*100)}%"></div></div>
+      <div class="dept-count">${cnt}</div>
+    </div>`).join('')||'<div class="empty">No data</div>';
+}
+
+function filterDepts(){ renderDeptList(); }
+
+function filterByDept(dept){
+  activeDept = activeDept===dept ? '' : dept;
+  loadRecords(1);
+}
+
+function renderRecords(records, total){
+  const el=document.getElementById('recordList');
+  if(!records.length){el.innerHTML='<div class="empty">No routing records found.</div>';return}
+  el.innerHTML=records.map(r=>`
+    <div class="record-row${currentRecord&&currentRecord.id===r.id?' active':''}" onclick="showRecord(${JSON.stringify(JSON.stringify(r))})">
+      <div class="rt">${esc(r.title||r.id)}</div>
+      <div class="rm">
+        <span class="badge ev-${r.evidence_label||'Possible'}">${r.evidence_label||'?'}</span>
+        <span>${(r.routing||[]).length} dept${(r.routing||[]).length!==1?'s':''}</span>
+        <span style="margin-left:auto;color:#3a6080">${reltime(r.created_at)}</span>
+      </div>
+    </div>`).join('');
+}
+
+function showRecord(jsonStr){
+  const r=JSON.parse(jsonStr);
+  currentRecord=r;
+  const el=document.getElementById('recordDetail');
+  el.style.display='block';
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+      <div>
+        <h3>${esc(r.title||r.id)}</h3>
+        <div style="font-size:11px;color:#5a8ab0;margin-top:3px">
+          Object: <span style="color:#82d6ff">${esc(r.object_id||'—')}</span> &nbsp;
+          <span class="badge ev-${r.evidence_label||'Possible'}">${r.evidence_label||'Possible'}</span>
+          &nbsp; ${reltime(r.created_at)}
+        </div>
+      </div>
+      <button onclick="document.getElementById('recordDetail').style.display='none'">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px">
+      ${(r.routing||[]).map(rt=>`
+        <div class="route-card">
+          <div class="route-dept">${esc(rt.department.replace(/_/g,' '))}</div>
+          <div class="route-reason">${esc(rt.reason)}</div>
+          <div>${(rt.signals||[]).map(s=>`<span class="signal-tag">${esc(s)}</span>`).join('')}</div>
+        </div>`).join('')}
+    </div>`;
+  // Re-render list to show active highlight
+  document.querySelectorAll('.record-row').forEach(el=>{
+    el.classList.toggle('active', el.querySelector('.rt')?.textContent===r.title);
+  });
+}
+
+function renderPager(page, pages, total){
+  const el=document.getElementById('pager');
+  if(pages<=1){el.innerHTML='';return}
+  el.innerHTML=`
+    <button onclick="loadRecords(1)" ${page<=1?'disabled':''}>«</button>
+    <button onclick="loadRecords(${page-1})" ${page<=1?'disabled':''}>‹</button>
+    <span style="font-size:12px;color:#5a8ab0">Page ${page} of ${pages} (${total} records)</span>
+    <button onclick="loadRecords(${page+1})" ${page>=pages?'disabled':''}>›</button>
+    <button onclick="loadRecords(${pages})" ${page>=pages?'disabled':''}>»</button>`;
+}
+
+async function routeNow(){
+  const text=document.getElementById('routeText').value.trim();
+  if(!text){alert('Enter some text to route');return}
+  const tags=document.getElementById('routeTags').value.split(',').map(x=>x.trim()).filter(Boolean);
+  const ev=document.getElementById('routeEv').value;
+  const r=await fetch('/api/crosstalk/route',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text,tags,evidence_label:ev})});
+  const d=await r.json();
+  const routing=d.routing||[];
+  document.getElementById('routeResult').innerHTML=routing.length?`
+    <div style="margin-top:8px">
+      <div style="font-size:12px;color:#72d4a8;margin-bottom:8px">✓ Routed to ${routing.length} department${routing.length!==1?'s':''}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px">
+        ${routing.map(rt=>`
+          <div class="route-card">
+            <div class="route-dept">${esc(rt.department.replace(/_/g,' '))}</div>
+            <div class="route-reason">${esc(rt.reason)}</div>
+            <div>${(rt.signals||[]).map(s=>`<span class="signal-tag">${esc(s)}</span>`).join('')}</div>
+          </div>`).join('')}
+      </div>
+    </div>`:'<div class="empty">No departments matched — try adding domain keywords.</div>';
+}
+
+function renderSignalMap(){
+  const el=document.getElementById('signalMap');
+  el.innerHTML=Object.entries(SIGNAL_MAP).map(([dept,signals])=>`
+    <div style="margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:#82d6ff;margin-bottom:4px">${dept.replace(/_/g,' ')}</div>
+      <div>${signals.map(s=>`<span class="signal-tag" style="cursor:pointer" onclick="injectSignal('${esc(s)}')">${esc(s)}</span>`).join('')}</div>
+    </div>`).join('');
+}
+
+function injectSignal(sig){
+  const ta=document.getElementById('routeText');
+  ta.value=(ta.value?ta.value+' ':'')+sig;
+  ta.focus();
+}
+
+function switchTab(el,tid){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['tab-history','tab-route'].forEach(id=>{
+    const d=document.getElementById(id);if(d)d.style.display='none';
+  });
+  const t=document.getElementById(tid);if(t)t.style.display='block';
+}
+
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function reltime(ts){
+  if(!ts)return'';
+  try{const d=new Date(ts),now=new Date(),diff=Math.floor((now-d)/1000);
+  if(diff<60)return'just now';if(diff<3600)return Math.floor(diff/60)+'m ago';
+  if(diff<86400)return Math.floor(diff/3600)+'h ago';return Math.floor(diff/86400)+'d ago';}
+  catch{return ts}
+}
+
+init();
+</script>
+</body>
+</html>
